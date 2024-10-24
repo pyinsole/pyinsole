@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class IRunner:
     @abc.abstractmethod
-    def start_loop(self):
+    def start_loop(self, debug: bool):
         pass
 
     @abc.abstractmethod
@@ -25,8 +25,7 @@ class IRunner:
 
 
 class Runner:
-    def __init__(self, *, debug: bool = False, on_start_callback: Callable = None, on_stop_callback: Callable = None):
-        self._debug = debug
+    def __init__(self, *, on_start_callback: Callable = None, on_stop_callback: Callable = None):
         self._on_start_callback = on_start_callback
         self._on_stop_callback = on_stop_callback
 
@@ -34,9 +33,9 @@ class Runner:
     def loop(self):
         return asyncio.get_event_loop()
 
-    def start_loop(self):
-        if self._debug:
-            self.loop.set_debug(enabled=self._debug)
+    def start_loop(self, debug: bool=False):
+        if debug:
+            self.loop.set_debug(enabled=debug)
 
         logger.info("starting pyinsole...")
 

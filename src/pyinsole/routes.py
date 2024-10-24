@@ -3,7 +3,7 @@ from typing import Callable, Any
 
 from .translators import ITranslator, ITranslatedMessage
 from .providers import IProvider
-from .handlers import IHandler
+from .handlers import ICallable, IHandler
 from .compat import iscoroutinefunction, to_thread
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ class Route:
     def __init__(
         self,
         provider: IProvider,
-        handler: Callable[[dict, dict, Any], bool] | IHandler,
+        handler: ICallable | IHandler,
         *,
         name: str="default",
         translator: ITranslator | None=None,

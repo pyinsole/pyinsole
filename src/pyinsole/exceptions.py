@@ -6,9 +6,9 @@ class ProviderRuntimeError(ProviderError):
     pass
 
 
-class LoaferError(Exception):
+class PyinsoleError(Exception):
     pass
 
 
-class DeleteMessage(LoaferError):  # noqa: N818
+class DeleteMessage(PyinsoleError):
     pass

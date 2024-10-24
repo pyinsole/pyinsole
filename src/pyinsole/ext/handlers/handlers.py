@@ -13,7 +13,7 @@ class Handler(IHandler):
     """Helper class that provides a standard way to create synchronous loafer handlers."""
 
     @abc.abstractmethod
-    def process(self, message: Any, *, meta: list[Any], **kwargs) -> bool:
+    def process(self, message: Any, meta: list[Any], **kwargs) -> bool:
         """
         Process a single message.
 

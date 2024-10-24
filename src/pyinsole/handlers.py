@@ -1,7 +1,5 @@
 import abc
-import logging
-
-logger = logging.getLogger(__name__)
+from typing import Callable, Any
 
 
 class IHandler(abc.ABC):
@@ -39,3 +37,6 @@ class IHandler(abc.ABC):
         If needed, the handler should perform clean-up actions.
         This method is called whenever we need to shutdown the handler when necessary.
         """
+
+
+ICallable = Callable[[dict, dict, Any], bool]

@@ -22,7 +22,6 @@ class SQSMessageTranslator(ITranslator):
             logger.exception("error=%r, message=%r", exc, raw_message)  # noqa: TRY401
             return translated_message
 
-        raw_message.pop("Body")
         translated_message["metadata"] |= raw_message
 
         return translated_message
