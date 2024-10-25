@@ -14,13 +14,19 @@ from .routes import Route
 logger = logging.getLogger(__name__)
 
 
-class IDispatcher:
+class AbstractDispatcher:
     @abc.abstractmethod
     def dispatch(self, forever: bool):
-        pass
+        """Method that connects providers to consumers and dispatches and manages messages in transit.
+        Calling Message acknowledgment and unacknowledged methods.
+
+        Args:
+            forever (bool): It dispatches messages continuously through the communication channel between provider and consumer.
+                If not, execution will only occur once.
+        """
 
 
-class Dispatcher:
+class Dispatcher(AbstractDispatcher):
     def __init__(
         self,
         routes: Sequence[Route],

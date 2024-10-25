@@ -2,12 +2,12 @@ from unittest import mock
 
 import pytest
 
-from pyinsole.translators import ITranslator, ITranslatedMessage
+from pyinsole.translators import AbstractTranslator, TranslatedMessage
 from pyinsole.routes import Route
 
 
-class StringMessageTranslator(ITranslator):
-    def translate(self, raw_message: dict) -> ITranslatedMessage:
+class StringMessageTranslator(AbstractTranslator):
+    def translate(self, raw_message: dict) -> TranslatedMessage:
         return {"content": str(raw_message), "metadata": {}}
 
 

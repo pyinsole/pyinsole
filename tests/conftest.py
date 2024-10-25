@@ -1,7 +1,7 @@
 import pytest
 
-from pyinsole.providers import IProvider
-from pyinsole.translators import ITranslator
+from pyinsole.providers import AbstractProvider
+from pyinsole.translators import AbstractTranslator
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ def dummy_handler():
 
 @pytest.fixture
 def dummy_provider():
-    class Dummy(IProvider):
+    class Dummy(AbstractProvider):
         async def fetch_messages(self):
             msg = "I should not be called"
             raise AssertionError(msg)
@@ -37,7 +37,7 @@ def dummy_provider():
 
 @pytest.fixture
 def dummy_translator():
-    class StringMessageTranslator(ITranslator):
+    class StringMessageTranslator(AbstractTranslator):
         def translate(self, raw_message: dict):
             return {"content": str(raw_message), "metadata": {}}
 

@@ -3,8 +3,8 @@ import logging
 import os
 from typing import Sequence
 
-from .dispatchers import IDispatcher, Dispatcher
-from .runners import IRunner, Runner
+from .dispatchers import AbstractDispatcher, Dispatcher
+from .runners import AbstractRunner, Runner
 from .routes import Route
 
 logger = logging.getLogger(__name__)
@@ -15,8 +15,8 @@ class Manager:
         self,
         routes: Sequence[Route],
         *,
-        runner: IRunner | None = None,
-        dispatcher: IDispatcher | None = None,
+        runner: AbstractRunner | None = None,
+        dispatcher: AbstractDispatcher | None = None,
         queue_size: int | None = None,
         workers: int | None = None,
     ):

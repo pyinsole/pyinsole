@@ -1,12 +1,12 @@
 import abc
 from typing import Any, Generic, TypeVar
 
-from pyinsole.handlers import IHandler
+from pyinsole.handlers import AbstractHandler
 
 T = TypeVar("T")
 
 
-class Handler(IHandler):
+class Handler(AbstractHandler):
     """Helper class that provides a standard way to create synchronous handlers."""
 
     @abc.abstractmethod
@@ -28,7 +28,7 @@ class Handler(IHandler):
         True if the message was succefully processed and should be deleted.
         """
 
-    def handle(self, *args, **kwargs) -> bool:
+    def __call__(self, *args, **kwargs) -> bool:
         """
         Handle a single message.
 
@@ -38,7 +38,7 @@ class Handler(IHandler):
         return self.process(message, metadata=metadata, **kwargs)
 
 
-class AsyncHandler(IHandler):
+class AsyncHandler(AbstractHandler):
     """Helper class that provides a standard way to create asyncio-compatible handlers."""
 
     @abc.abstractmethod
@@ -60,7 +60,7 @@ class AsyncHandler(IHandler):
         True if the message was succefully processed and should be deleted.
         """
 
-    async def handle(self, *args, **kwargs) -> bool:
+    async def __call__(self, *args, **kwargs) -> bool:
         """
         Handle a single message.
 
@@ -70,7 +70,7 @@ class AsyncHandler(IHandler):
         return await self.process(message, metadata=metadata, **kwargs)
 
 
-class ModelHandler(Generic[T], IHandler):
+class ModelHandler(Generic[T], AbstractHandler):
     """
     Helper class that provides a standard way to create synchronous handlers.
 
@@ -103,7 +103,7 @@ class ModelHandler(Generic[T], IHandler):
         True if the message was succefully processed and should be deleted.
         """
 
-    def handle(self, *args, **kwargs) -> bool:
+    def __call__(self, *args, **kwargs) -> bool:
         """
         Handle a single message.
 
@@ -113,7 +113,7 @@ class ModelHandler(Generic[T], IHandler):
         return self.process(self.model_class(**message), metadata=metadata, **kwargs)
 
 
-class AsyncModelHandler(Generic[T], IHandler):
+class AsyncModelHandler(Generic[T], AbstractHandler):
     """
     Helper class that provides a standard way to create asyncio-compatible handlers.
 
@@ -146,7 +146,7 @@ class AsyncModelHandler(Generic[T], IHandler):
         True if the message was succefully processed and should be deleted.
         """
 
-    async def handle(self, *args, **kwargs) -> bool:
+    async def __call__(self, *args, **kwargs) -> bool:
         """
         Handle a single message.
 

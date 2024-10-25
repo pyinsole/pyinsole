@@ -1,9 +1,9 @@
 import logging
 from typing import Callable
 
-from .translators import ITranslator, ITranslatedMessage
-from .providers import IProvider
-from .handlers import ICallable, IHandler
+from .translators import AbstractTranslator, TranslatedMessage
+from .providers import AbstractProvider
+from .handlers import Handler
 from .compat import iscoroutinefunction, to_thread
 
 logger = logging.getLogger(__name__)
@@ -21,18 +21,18 @@ async def to_coroutine(func, *args, **kwargs):
 class Route:
     def __init__(
         self,
-        provider: IProvider,
-        handler: ICallable | IHandler,
+        provider: AbstractProvider,
+        handler: Handler,
         *,
         name: str = "default",
-        translator: ITranslator | None = None,
+        translator: AbstractTranslator | None = None,
         error_handler: Callable | None = None,
     ):
-        if not isinstance(provider, IProvider):
+        if not isinstance(provider, AbstractProvider):
             msg = f"invalid provider instance: {provider!r}"
             raise TypeError(msg)
 
-        if translator and not isinstance(translator, ITranslator):
+        if translator and not isinstance(translator, AbstractTranslator):
             msg = f"invalid message translator instance: {translator!r}"
             raise TypeError(msg)
 
@@ -62,7 +62,7 @@ class Route:
             f"<{type(self).__name__}(name={self.name} provider={self.provider!r} handler={self.handler!r})>"
         )
 
-    def prepare_message(self, raw_message) -> ITranslatedMessage:
+    def prepare_message(self, raw_message) -> TranslatedMessage:
         default_message = {"content": raw_message, "metadata": {}}
 
         if not self.translator:
