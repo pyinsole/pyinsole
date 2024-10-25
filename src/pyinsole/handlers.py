@@ -39,4 +39,4 @@ class AbstractHandler(abc.ABC):
         """
 
 
-Handler = Callable[[dict, dict, Any], bool] | AbstractHandler
+Handler = Callable[[dict, dict, Any], bool]
