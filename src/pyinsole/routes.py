@@ -50,11 +50,11 @@ class Route:
         if callable(handler):
             self.handler = handler
         else:
-            self.handler = handler.handle
+            self.handler = getattr(handler, "handle", None)
             self._handler_instance = handler
 
         if not self.handler:
-            msg = f"handler must be a callable object or implement `handle` method: {self.handler!r}"
+            msg = f"handler must be a callable object or implement `IHandler` interface: {self.handler!r}"
             raise TypeError(msg)
 
     def __str__(self):

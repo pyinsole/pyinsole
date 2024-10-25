@@ -61,12 +61,15 @@ This setup allows you to easily process messages from an SQS queue using the `py
     aws --endpoint-url=http://localhost:4566 sqs send-message --queue-url http://localhost:4566/000000000000/example-queue --message-body "Your message body"
     ```
 
+<br>
+
 ## 🎯 Roadmap
 
 You can find the project roadmap [here](./ROADMAP.md).
 
 This document outlines future improvements, features, and tasks planned for the project.
 
+<br>
 
 ## 🫱🏻‍🫲🏽 How to contribute
 
