@@ -1,5 +1,3 @@
-# TODO: it should be async
-
 
 def sentry_handler(sdk_or_hub, delete_message=False):
     def send_to_sentry(exc_info, message):
