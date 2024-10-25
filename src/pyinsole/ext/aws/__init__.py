@@ -1,5 +1,3 @@
 from .routes import SQSRoute
 
-__all__ = [
-    "SQSRoute"
-]
+__all__ = ["SQSRoute"]

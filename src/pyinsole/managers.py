@@ -9,6 +9,7 @@ from .routes import Route
 
 logger = logging.getLogger(__name__)
 
+
 class Manager:
     def __init__(
         self,
@@ -24,7 +25,7 @@ class Manager:
 
         self._future: asyncio.Future = None
 
-    def run(self, forever: bool=True, debug: bool=False):
+    def run(self, forever: bool = True, debug: bool = False):
         loop = self.runner.loop
 
         self._future = asyncio.ensure_future(

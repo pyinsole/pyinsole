@@ -115,7 +115,9 @@ class Dispatcher:
 
         async with TaskGroup() as tg:
             provider_task = tg.create_task(self._fetch_messages(processing_queue, tg, forever))
-            consumer_tasks = [tg.create_task(self._consume_messages(processing_queue)) for _ in range(self.workers)]
+            consumer_tasks = [
+                tg.create_task(self._consume_messages(processing_queue)) for _ in range(self.workers)
+            ]
 
             async def join():
                 await provider_task

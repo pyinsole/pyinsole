@@ -52,7 +52,9 @@ class SQSProvider(IProvider, BaseSQSProvider):
 
             custom_visibility_timeout = round(backoff_multiplier * self._options.get("VisibilityTimeout", 30))
             logger.info(
-                "message not processed, receipt=%r, custom_visibility_timeout=%r", receipt, custom_visibility_timeout
+                "message not processed, receipt=%r, custom_visibility_timeout=%r",
+                receipt,
+                custom_visibility_timeout,
             )
             queue_url = await self.get_queue_url(self.queue_name)
             try:
@@ -73,7 +75,10 @@ class SQSProvider(IProvider, BaseSQSProvider):
             queue_url = await self.get_queue_url(self.queue_name)
             async with self.get_client() as client:
                 response = await client.receive_message(QueueUrl=queue_url, **self._options)
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as exc:
+        except (
+            botocore.exceptions.BotoCoreError,
+            botocore.exceptions.ClientError,
+        ) as exc:
             msg = f"error fetching messages from queue={self.queue_name}: {exc!s}"
             raise ProviderError(msg) from exc
 

@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Any
+from typing import Callable
 
 from .translators import ITranslator, ITranslatedMessage
 from .providers import IProvider
@@ -24,9 +24,9 @@ class Route:
         provider: IProvider,
         handler: ICallable | IHandler,
         *,
-        name: str="default",
-        translator: ITranslator | None=None,
-        error_handler: Callable | None=None
+        name: str = "default",
+        translator: ITranslator | None = None,
+        error_handler: Callable | None = None,
     ):
         if not isinstance(provider, IProvider):
             msg = f"invalid provider instance: {provider!r}"
@@ -58,7 +58,9 @@ class Route:
             raise TypeError(msg)
 
     def __str__(self):
-        return f"<{type(self).__name__}(name={self.name} provider={self.provider!r} handler={self.handler!r})>"
+        return (
+            f"<{type(self).__name__}(name={self.name} provider={self.provider!r} handler={self.handler!r})>"
+        )
 
     def prepare_message(self, raw_message) -> ITranslatedMessage:
         default_message = {"content": raw_message, "metadata": {}}

@@ -15,7 +15,9 @@ def create_mock_route(messages):
         message_not_processed=mock.AsyncMock(),
     )
 
-    message_translator = mock.Mock(translate=mock.Mock(side_effect=[{"content": message} for message in messages]))
+    message_translator = mock.Mock(
+        translate=mock.Mock(side_effect=[{"content": message} for message in messages])
+    )
     return mock.AsyncMock(
         provider=provider,
         handler=mock.AsyncMock(),
@@ -35,7 +37,7 @@ async def test_dispatch_message(route):
     dispatcher = Dispatcher([route])
 
     message = "foobar"
-    confirmation = await dispatcher._dispatch_message(message, route) # noqa: SLF001
+    confirmation = await dispatcher._dispatch_message(message, route)  # noqa: SLF001
     assert confirmation == "confirmation"
 
     route.deliver.assert_awaited_once_with(message)
@@ -47,7 +49,7 @@ async def test_dispatch_invalid_message(route, message):
     route.deliver = mock.AsyncMock()
     dispatcher = Dispatcher([route])
 
-    confirmation = await dispatcher._dispatch_message(message, route) # noqa: SLF001
+    confirmation = await dispatcher._dispatch_message(message, route)  # noqa: SLF001
     assert confirmation is False
     route.deliver.assert_not_awaited()
 
@@ -58,7 +60,7 @@ async def test_dispatch_message_task_delete_message(route):
     dispatcher = Dispatcher([route])
     message = "rejected-message"
 
-    confirmation = await dispatcher._dispatch_message(message, route) # noqa: SLF001
+    confirmation = await dispatcher._dispatch_message(message, route)  # noqa: SLF001
 
     assert confirmation is True
     assert route.deliver.called
@@ -73,7 +75,7 @@ async def test_dispatch_message_task_error(route):
     dispatcher = Dispatcher([route])
     message = "message"
 
-    confirmation = await dispatcher._dispatch_message(message, route) # noqa: SLF001
+    confirmation = await dispatcher._dispatch_message(message, route)  # noqa: SLF001
 
     assert confirmation == "confirmation"
     route.deliver.assert_awaited_once_with(message)
@@ -86,7 +88,7 @@ async def test_dispatch_message_task_cancel(route):
     dispatcher = Dispatcher([route])
     message = "message"
 
-    confirmation = await dispatcher._dispatch_message(message, route) # noqa: SLF001
+    confirmation = await dispatcher._dispatch_message(message, route)  # noqa: SLF001
 
     assert confirmation is False
     route.deliver.assert_awaited_once_with(message)
@@ -95,11 +97,11 @@ async def test_dispatch_message_task_cancel(route):
 @pytest.mark.asyncio
 async def test_dispatch_providers(route):
     dispatcher = Dispatcher([route])
-    dispatcher._dispatch_message = mock.AsyncMock() # noqa: SLF001
+    dispatcher._dispatch_message = mock.AsyncMock()  # noqa: SLF001
 
     await dispatcher.dispatch(forever=False)
 
-    dispatcher._dispatch_message.assert_awaited_once_with("message", route) # noqa: SLF001
+    dispatcher._dispatch_message.assert_awaited_once_with("message", route)  # noqa: SLF001
 
 
 @pytest.mark.asyncio
@@ -107,7 +109,7 @@ async def test_dispatch_providers_multiple_routes():
     route1 = create_mock_route(["message1", "message2"])
     route2 = create_mock_route(["message3"])
     dispatcher = Dispatcher([route1, route2])
-    dispatcher._dispatch_message = mock.AsyncMock() # noqa: SLF001
+    dispatcher._dispatch_message = mock.AsyncMock()  # noqa: SLF001
 
     await dispatcher.dispatch(forever=False)
 

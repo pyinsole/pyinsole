@@ -10,6 +10,7 @@ from typing import Callable
 
 logger = logging.getLogger(__name__)
 
+
 class IRunner:
     @abc.abstractmethod
     def start_loop(self, debug: bool):
@@ -33,7 +34,7 @@ class Runner:
     def loop(self):
         return asyncio.get_event_loop()
 
-    def start_loop(self, debug: bool=False):
+    def start_loop(self, debug: bool = False):
         if debug:
             self.loop.set_debug(enabled=debug)
 

@@ -13,7 +13,10 @@ class SQSMessageTranslator(ITranslator):
         try:
             body = raw_message["Body"]
         except (KeyError, TypeError):
-            logger.exception("missing Body key in SQS message. It really came from SQS ?\nmessage=%r", raw_message)
+            logger.exception(
+                "missing Body key in SQS message. It really came from SQS ?\nmessage=%r",
+                raw_message,
+            )
             return translated_message
 
         try:

@@ -8,6 +8,7 @@ from pyinsole.runners import Runner
 
 _path = "pyinsole.runners"
 
+
 @mock.patch(f"{_path}.Runner.loop", new_callable=mock.PropertyMock)
 def test_runner_start(loop_mock):
     runner = Runner()
