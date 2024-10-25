@@ -1,19 +1,16 @@
-import logging
 import abc
 from typing import Any, Generic, TypeVar
 
 from pyinsole.handlers import IHandler
 
-logger = logging.getLogger(__name__)
-
 T = TypeVar("T")
 
 
 class Handler(IHandler):
-    """Helper class that provides a standard way to create synchronous loafer handlers."""
+    """Helper class that provides a standard way to create synchronous handlers."""
 
     @abc.abstractmethod
-    def process(self, message: Any, meta: list[Any], **kwargs) -> bool:
+    def process(self, message: Any, metadata: list[Any], **kwargs) -> bool:
         """
         Process a single message.
 
@@ -21,9 +18,9 @@ class Handler(IHandler):
 
         Parameters
         ----------
-            message: Any
+            message: dict
                 the message to process
-            meta: list[Any]
+            metadata: list[Any]
                 metadata associated with the message
 
         Returns
@@ -31,21 +28,21 @@ class Handler(IHandler):
         True if the message was succefully processed and should be deleted.
         """
 
-    def handle(self, *args) -> bool:
+    def handle(self, *args, **kwargs) -> bool:
         """
         Handle a single message.
 
-        This method is called by loafer and it actually calls process.
+        This method is called by deliver from route and it actually calls process.
         """
-        message, *meta = args
-        return self.process(message, meta=meta)
+        message, *metadata = args
+        return self.process(message, metadata=metadata, **kwargs)
 
 
 class AsyncHandler(IHandler):
-    """Helper class that provides a standard way to create asyncio-compatible loafer handlers."""
+    """Helper class that provides a standard way to create asyncio-compatible handlers."""
 
     @abc.abstractmethod
-    async def process(self, message: Any, meta: list, **kwargs) -> bool:
+    async def process(self, message: Any, metadata: list[Any], **kwargs) -> bool:
         """
         Process a single message.
 
@@ -55,7 +52,7 @@ class AsyncHandler(IHandler):
         ----------
             message: Any
                 the message to process
-            meta: list[Any]
+            metadata: list[Any]
                 metadata associated with the message
 
         Returns
@@ -63,19 +60,19 @@ class AsyncHandler(IHandler):
         True if the message was succefully processed and should be deleted.
         """
 
-    async def handle(self, *args) -> bool:
+    async def handle(self, *args, **kwargs) -> bool:
         """
         Handle a single message.
 
         This method is called by loafer and it actually calls process.
         """
-        message, *meta = args
-        return await self.process(message, meta=meta)
+        message, *metadata = args
+        return await self.process(message, metadata=metadata, **kwargs)
 
 
 class ModelHandler(Generic[T], IHandler):
     """
-    Helper class that provides a standard way to create synchronous loafer handlers.
+    Helper class that provides a standard way to create synchronous handlers.
 
     This handler casts the message to a model type.
 
@@ -88,7 +85,7 @@ class ModelHandler(Generic[T], IHandler):
     model_class: type[T]
 
     @abc.abstractmethod
-    def process(self, message: T, *, meta: list, **kwargs) -> bool:
+    def process(self, message: T, metadata: list[Any], **kwargs) -> bool:
         """
         Process a single message.
 
@@ -98,7 +95,7 @@ class ModelHandler(Generic[T], IHandler):
         ----------
             message: T
                 the message to process
-            meta: list[Any]
+            metadata: list[Any]
                 metadata associated with the message
 
         Returns
@@ -106,19 +103,19 @@ class ModelHandler(Generic[T], IHandler):
         True if the message was succefully processed and should be deleted.
         """
 
-    def handle(self, *args) -> bool:
+    def handle(self, *args, **kwargs) -> bool:
         """
         Handle a single message.
 
-        This method is called by loafer and it actually calls process.
+        This method is called by deliver from route and it actually calls process.
         """
-        message, *meta = args
-        return self.process(self.model_class(**message), meta=meta)
+        message, *metadata = args
+        return self.process(self.model_class(**message), metadata=metadata, **kwargs)
 
 
 class AsyncModelHandler(Generic[T], IHandler):
     """
-    Helper class that provides a standard way to create asyncio-compatible loafer handlers.
+    Helper class that provides a standard way to create asyncio-compatible handlers.
 
     This handler casts the message to a model type.
 
@@ -131,7 +128,7 @@ class AsyncModelHandler(Generic[T], IHandler):
     model_class: type[T]
 
     @abc.abstractmethod
-    async def process(self, message: T, *, meta: list, **kwargs) -> bool:
+    async def process(self, message: T, metadata: list[Any], **kwargs) -> bool:
         """
         Process a single message.
 
@@ -141,7 +138,7 @@ class AsyncModelHandler(Generic[T], IHandler):
         ----------
             message: T
                 the message to process
-            meta: list[Any]
+            metadata: list[Any]
                 metadata associated with the message
 
         Returns
@@ -149,11 +146,11 @@ class AsyncModelHandler(Generic[T], IHandler):
         True if the message was succefully processed and should be deleted.
         """
 
-    async def handle(self, *args) -> bool:
+    async def handle(self, *args, **kwargs) -> bool:
         """
         Handle a single message.
 
-        This method is called by loafer and it actually calls process.
+        This method is called by deliver from route and it actually calls process.
         """
-        message, *meta = args
-        return await self.process(self.model_class(**message), meta=meta)
+        message, *metadata = args
+        return await self.process(self.model_class(**message), metadata=metadata, **kwargs)
