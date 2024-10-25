@@ -7,13 +7,13 @@
 </p>
 <br>
 
-### 💻 Usage
+## 💻 Usage
 
 The script defines an asynchronous message handler function (`my_handler`) that will be invoked whenever a message is received from the SQS queue. The `SQSRoute` class is used to route messages from the `example-queue` to the handler.
 
 #### Example Code
 
-Here’s the main code that processes messages from the `example-queue`:
+Here’s the main code that processes messages from the `example-queue`. The script will listen for messages on the `example-queue`, and for each message received, it will print the message content, associated metadata, and any additional keyword arguments.
 
 ```python
 import os
@@ -61,12 +61,14 @@ This setup allows you to easily process messages from an SQS queue using the `py
     aws --endpoint-url=http://localhost:4566 sqs send-message --queue-url http://localhost:4566/000000000000/example-queue --message-body "Your message body"
     ```
 
-#### Output
+## 🎯 Roadmap
 
-The script will listen for messages on the `example-queue`, and for each message received, it will print the message content, associated metadata, and any additional keyword arguments.
+You can find the project roadmap [here](./ROADMAP.md).
+
+This document outlines future improvements, features, and tasks planned for the project.
 
 
-### 🫱🏻‍🫲🏽 How to contribute
+## 🫱🏻‍🫲🏽 How to contribute
 
 We welcome contributions of all kinds to make **pyinsole** better! To contribute to the project, follow these steps:
 
