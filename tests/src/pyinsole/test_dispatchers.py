@@ -74,7 +74,7 @@ async def test_dispatch_message_task_error(route):
     message = "message"
 
     confirmation = await dispatcher._dispatch_message(message, route) # noqa: SLF001
- 
+
     assert confirmation == "confirmation"
     route.deliver.assert_awaited_once_with(message)
     route.error_handler.assert_awaited_once_with((Exception, exc, mock.ANY), message)
