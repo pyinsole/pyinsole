@@ -1,6 +1,7 @@
 import pytest
 
 from pyinsole.providers import IProvider
+from pyinsole.translators import ITranslator
 
 
 @pytest.fixture
@@ -32,3 +33,12 @@ def dummy_provider():
             raise AssertionError(msg)
 
     return Dummy()
+
+
+@pytest.fixture
+def dummy_translator():
+    class StringMessageTranslator(ITranslator):
+        def translate(self, raw_message: dict):
+            return {"content": str(raw_message), "metadata": {}}
+
+    return StringMessageTranslator()
