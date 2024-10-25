@@ -1,5 +1,4 @@
 import sys
-from asyncio import TaskGroup, to_thread
 
 PY312 = sys.version_info >= (3, 12)
 
@@ -10,7 +9,5 @@ else:
 
 
 __all__ = [
-    "to_thread",
     "iscoroutinefunction",
-    "TaskGroup",
 ]

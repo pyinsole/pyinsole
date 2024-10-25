@@ -1,10 +1,11 @@
+import asyncio
 import logging
 from typing import Callable
 
 from .translators import AbstractTranslator, TranslatedMessage
 from .providers import AbstractProvider
 from .handlers import Handler, AbstractHandler
-from .compat import iscoroutinefunction, to_thread
+from .compat import iscoroutinefunction
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ async def to_coroutine(handler: Handler, *args, **kwargs):
         return await func(*args, **kwargs)
 
     logger.debug("handler will run in a separate thread: %r", func)
-    return await to_thread(func, *args, **kwargs)
+    return await asyncio.to_thread(func, *args, **kwargs)
 
 
 class Route:
