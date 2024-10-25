@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="img/pyinsole-img.ico" style="width:100px;height:100px;border-radius:50%;" alt="Circular Image">
+    <img src="img/pyinsole-img.png" style="width:100px;height:100px;" alt="Circular Image">
 </div>
 <br>
 <p align="center">
