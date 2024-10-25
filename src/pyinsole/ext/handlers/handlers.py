@@ -64,7 +64,7 @@ class AsyncHandler(AbstractHandler):
         """
         Handle a single message.
 
-        This method is called by loafer and it actually calls process.
+        This method is called by deliver from route and it actually calls process.
         """
         message, *metadata = args
         return await self.process(message, metadata=metadata, **kwargs)
