@@ -9,7 +9,12 @@ from .compat import iscoroutinefunction, to_thread
 logger = logging.getLogger(__name__)
 
 
-async def to_coroutine(func, *args, **kwargs):
+async def to_coroutine(handler: Handler, *args, **kwargs):
+    func = handler
+
+    if isinstance(handler, object):
+        func = handler.__call__
+
     if iscoroutinefunction(func):
         logger.debug("handler is coroutine! %r", func)
         return await func(*args, **kwargs)
@@ -32,6 +37,10 @@ class Route:
             msg = f"invalid provider instance: {provider!r}"
             raise TypeError(msg)
 
+        if not callable(handler):
+            msg = f"handler must be a callable object or implement `AbstractHandler` interface: {self.handler!r}"
+            raise TypeError(msg)
+
         if translator and not isinstance(translator, AbstractTranslator):
             msg = f"invalid message translator instance: {translator!r}"
             raise TypeError(msg)
@@ -41,21 +50,12 @@ class Route:
             raise TypeError(msg)
 
         self.name = name
+        self.handler = handler
         self.provider = provider
         self.translator = translator
 
         self._error_handler = error_handler
         self._handler_instance = None
-
-        if callable(handler):
-            self.handler = handler
-        else:
-            self.handler = getattr(handler, "handle", None)
-            self._handler_instance = handler
-
-        if not self.handler:
-            msg = f"handler must be a callable object or implement `IHandler` interface: {self.handler!r}"
-            raise TypeError(msg)
 
     def __str__(self):
         return (
