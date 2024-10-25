@@ -2,9 +2,9 @@ import abc
 from typing import Callable, Any
 
 
-class IHandler(abc.ABC):
+class AbstractHandler(abc.ABC):
     @abc.abstractmethod
-    def handle(self, message: dict, metadata: dict, **kwargs) -> bool:
+    def __call__(self, message: dict, metadata: dict, **kwargs) -> bool:
         """Process a given message and its associated metadata, and return a status.
 
         This abstract method should be implemented by subclasses to handle and process the
@@ -39,4 +39,4 @@ class IHandler(abc.ABC):
         """
 
 
-ICallable = Callable[[dict, dict, Any], bool]
+Handler = Callable[[dict, dict, Any], bool] | AbstractHandler

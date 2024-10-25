@@ -1,7 +1,7 @@
 import abc
 
 
-class IProvider(abc.ABC):
+class AbstractProvider(abc.ABC):
     @abc.abstractmethod
     async def fetch_messages(self) -> list:
         """Return a sequence of messages to be processed.

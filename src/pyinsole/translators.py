@@ -5,14 +5,14 @@ from typing import TypedDict
 logger = logging.getLogger(__name__)
 
 
-class ITranslatedMessage(TypedDict):
+class TranslatedMessage(TypedDict):
     content: str
     metadata: dict
 
 
-class ITranslator(abc.ABC):
+class AbstractTranslator(abc.ABC):
     @abc.abstractmethod
-    def translate(self, raw_message: dict) -> ITranslatedMessage:
+    def translate(self, raw_message: dict) -> TranslatedMessage:
         """Translate a given message to an appropriate format to message processing.
 
         This method should return a `dict` instance with two keys: `content`

@@ -1,14 +1,14 @@
 import json
 import logging
 
-from pyinsole.translators import ITranslator, ITranslatedMessage
+from pyinsole.translators import AbstractTranslator, TranslatedMessage
 
 logger = logging.getLogger(__name__)
 
 
-class SQSMessageTranslator(ITranslator):
-    def translate(self, raw_message: dict) -> ITranslatedMessage:
-        translated_message: ITranslatedMessage = {"content": None, "metadata": {}}
+class SQSMessageTranslator(AbstractTranslator):
+    def translate(self, raw_message: dict) -> TranslatedMessage:
+        translated_message: TranslatedMessage = {"content": None, "metadata": {}}
 
         try:
             body = raw_message["Body"]
