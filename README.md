@@ -5,7 +5,7 @@
 <p align="center">
   <em><b>pyinsole</b> is an asynchronous message dispatcher inpired by <a href="https://github.com/georgeyk/loafer">loafer</a> designed to provide a flexible and efficient way to consume messages from Amazon SQS queues. The <b>pyinsole</b> simplifies the process of integrating with SQS by offering multiple consumption strategies, allowing you to choose the best approach for your application's needs.</em>
 </p>
-
+<br>
 
 ### 💻 Usage
 
