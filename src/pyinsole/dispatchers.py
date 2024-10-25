@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import asyncio
 import abc
+import asyncio
 import logging
 import sys
-from typing import Sequence, Any
+from typing import Any, Sequence
 
-from .compat import TaskGroup
 from .exceptions import DeleteMessage
-
 from .routes import Route
 
 logger = logging.getLogger(__name__)
@@ -65,7 +63,7 @@ class Dispatcher:
     async def _fetch_messages(
         self,
         processing_queue: asyncio.Queue,
-        tg: TaskGroup,
+        tg: asyncio.TaskGroup,
         forever: bool = True,
     ):
         routes = list(self.routes)
@@ -113,7 +111,7 @@ class Dispatcher:
     async def dispatch(self, forever: bool = True):
         processing_queue = asyncio.Queue(self.queue_size)
 
-        async with TaskGroup() as tg:
+        async with asyncio.TaskGroup() as tg:
             provider_task = tg.create_task(self._fetch_messages(processing_queue, tg, forever))
             consumer_tasks = [
                 tg.create_task(self._consume_messages(processing_queue)) for _ in range(self.workers)
