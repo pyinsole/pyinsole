@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 
 from pyinsole.translators import AbstractTranslator, TranslatedMessage
+from pyinsole.handlers import AbstractHandler
 from pyinsole.routes import Route
 
 
@@ -115,13 +116,13 @@ async def test_error_handler_coroutine(dummy_provider):
 
 @pytest.mark.asyncio
 async def test_handler_class_based(dummy_provider):
-    class Handler:
-        async def handle(self, *args, **kwargs):
+    class Handler(AbstractHandler):
+        async def __call__(self, *args, **kwargs):
             pass
 
     handler = Handler()
     route = Route(dummy_provider, handler=handler)
-    assert route.handler == handler.handle
+    assert route.handler == handler
 
 
 @pytest.mark.asyncio
@@ -149,13 +150,17 @@ def test_route_stop(dummy_provider):
 
 
 def test_route_stop_with_handler_stop(dummy_provider):
-    class Handler:
-        def handle(self, *args):
+    class Handler(AbstractHandler):
+        def __call__(self, *args, **kwargs) -> bool:
+            pass
+
+        def stop(self):
             pass
 
     dummy_provider.stop = mock.Mock()
     handler = Handler()
     handler.stop = mock.Mock()
+
     route = Route(dummy_provider, handler)
     route.stop()
 

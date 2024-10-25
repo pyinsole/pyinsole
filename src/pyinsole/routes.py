@@ -3,7 +3,7 @@ from typing import Callable
 
 from .translators import AbstractTranslator, TranslatedMessage
 from .providers import AbstractProvider
-from .handlers import Handler
+from .handlers import Handler, AbstractHandler
 from .compat import iscoroutinefunction, to_thread
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 async def to_coroutine(handler: Handler, *args, **kwargs):
     func = handler
 
-    if isinstance(handler, object):
+    if isinstance(handler, AbstractHandler):
         func = handler.__call__
 
     if iscoroutinefunction(func):
@@ -38,7 +38,7 @@ class Route:
             raise TypeError(msg)
 
         if not callable(handler):
-            msg = f"handler must be a callable object or implement `AbstractHandler` interface: {self.handler!r}"
+            msg = f"handler must be a callable object or implement `AbstractHandler` interface: {handler!r}"
             raise TypeError(msg)
 
         if translator and not isinstance(translator, AbstractTranslator):
@@ -94,5 +94,5 @@ class Route:
         logger.info("stopping route %s", self)
         self.provider.stop()
 
-        if self._handler_instance:
-            self._handler_instance.stop()
+        if isinstance(self.handler, AbstractHandler):
+            self.handler.stop()
