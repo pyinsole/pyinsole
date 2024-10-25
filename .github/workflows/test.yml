@@ -32,12 +32,28 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Setup Hatch
-        run: pipx install hatch
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          poetry-version: latest
+          install-extra-deps: true  # This installs Poetry and its dependencies
 
-      - name: Run static analysis
-        run: hatch fmt --check
+      # Cache Poetry dependencies to speed up the build
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pypoetry
+            .venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-ansi --with dev
+
+      - name: Run pre-commit
+        run: poetry run pre-commit run --all-files
 
       - name: Run tests
-        run: |
-          hatch env run -e all -i py=${{ matrix.python-version }} test
+        run: poetry run pytest
