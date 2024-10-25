@@ -1,26 +1,6 @@
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Circular Image</title>
-    <style>
-        .circular-ico {
-            width: 100px;       /* Set a width */
-            height: 100px;      /* Set a height */
-            border-radius: 50%; /* Make it circular */
-            overflow: hidden;   /* Hide overflow to ensure circular appearance */
-        }
-    </style>
-</head>
-<body>
-    <div align="center">
-        <img src="img/pyinsole-img.ico" alt="Circular Image" class="circular-ico">
-    </div>
-</body>
-</html>
-
+<div align="center">
+    <img src="img/pyinsole-img.ico" style="width:100px;height:100px;border-radius:50%;" alt="Circular Image">
+</div>
 <br>
 <p align="center">
   <em><b>pyinsole</b> is an asynchronous message dispatcher inpired by <a href="https://github.com/georgeyk/loafer">loafer</a> designed to provide a flexible and efficient way to consume messages from Amazon SQS queues. The <b>pyinsole</b> simplifies the process of integrating with SQS by offering multiple consumption strategies, allowing you to choose the best approach for your application's needs.</em>
