@@ -1,16 +1,31 @@
 [tool.poetry]
 name = "pyinsole"
 version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
+description = "Asynchronous message dispatcher for concurrent tasks processing"
 readme = "README.md"
+license = "MIT"
+authors = ["Eduardo Neto edopneto@gmail.com"]
+keywords = ["asyncio", "message", "dispatcher", "tasks", "microservices"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Distributed Computing",
+]
 
 [[tool.poetry.source]]
 name = "PyPI"
 priority = "primary"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11"
 aiobotocore = "^2.15.2"
 sentry-sdk = "^2.17.0"
 
@@ -45,6 +60,6 @@ target-version = ["py311"]
 profile = "black"
 line_length = 110
 known_first_party = []
-known_local_folder = ["tests", "bank_queue_processing_service"]
+known_local_folder = ["tests", "src"]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 default_section = "THIRDPARTY"
