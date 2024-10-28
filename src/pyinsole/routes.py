@@ -38,7 +38,8 @@ class Route:
             msg = f"invalid provider instance: {provider!r}"
             raise TypeError(msg)
 
-        if not callable(handler):
+        # handler must be a callable or a instante of AbstractHandler
+        if not (callable(handler) or isinstance(handler, AbstractHandler)):
             msg = f"handler must be a callable object or implement `AbstractHandler` interface: {handler!r}"
             raise TypeError(msg)
 

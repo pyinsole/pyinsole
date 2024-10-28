@@ -126,6 +126,15 @@ async def test_handler_class_based(dummy_provider):
 
 
 @pytest.mark.asyncio
+async def test_handler_function_based(dummy_provider):
+    async def some_handler(*args, **kwargs):
+        pass
+
+    route = Route(dummy_provider, handler=some_handler)
+    assert route.handler == some_handler
+
+
+@pytest.mark.asyncio
 async def test_handler_class_based_invalid(dummy_provider):
     class Handler:
         pass
