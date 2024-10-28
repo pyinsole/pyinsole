@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "pyinsole"
-version = "0.1.0"
+version = "0.1.0-alpha"
 description = "Asynchronous message dispatcher for concurrent tasks processing"
 readme = "README.md"
 license = "MIT"
