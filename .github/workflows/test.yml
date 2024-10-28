@@ -40,7 +40,7 @@ jobs:
 
       # Cache Poetry dependencies to speed up the build
       - name: Cache Poetry dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/pypoetry
