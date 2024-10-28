@@ -42,6 +42,38 @@ if __name__ == '__main__':
     manager.run()
 ```
 
+Or you can use class based handlers if you prefer:
+
+```python
+import os
+
+from pyinsole import Manager
+from pyinsole.ext.aws import SQSRoute
+from pyinsole.ext.handlers import AsyncHandler
+
+class MyHandler(AsyncHandler):
+    async def process(self, message, metadata, **kwargs) -> bool:
+        print(f"message={message}, metadata={metadata}, kwargs={kwargs}")
+        return  True
+
+provider_options = {
+    "endpoint_url": os.getenv("AWS_ENDPOINT_URL"),
+    "options": {
+        "MaxNumberOfMessages": 10,
+        "WaitTimeSeconds": os.getenv("AWS_WAIT_TIME_SECONDS", 20),
+    },
+}
+
+routes = [
+    SQSRoute('example-queue', handler=MyHandler(), provider_options=provider_options),
+]
+
+if __name__ == '__main__':
+    manager = Manager(routes)
+    manager.run()
+```
+
+
 #### Running the Script
 
 This setup allows you to easily process messages from an SQS queue using the `pyinsole` library. You can modify the `my_handler` function to implement your specific message processing logic.
