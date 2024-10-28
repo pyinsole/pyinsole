@@ -1,8 +1,5 @@
 import abc
-import logging
 from typing import TypedDict
-
-logger = logging.getLogger(__name__)
 
 
 class TranslatedMessage(TypedDict):
