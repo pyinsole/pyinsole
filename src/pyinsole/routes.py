@@ -39,7 +39,7 @@ class Route:
             raise TypeError(msg)
 
         # handler must be a callable or a instante of AbstractHandler
-        if not (callable(handler) or isinstance(handler, AbstractHandler)):
+        if not callable(handler):
             msg = f"handler must be a callable object or implement `AbstractHandler` interface: {handler!r}"
             raise TypeError(msg)
 
