@@ -13,9 +13,6 @@ logger = logging.getLogger(__name__)
 async def to_coroutine(handler: Handler, *args, **kwargs):
     func = handler
 
-    if isinstance(handler, AbstractHandler):
-        func = handler.__call__
-
     if iscoroutinefunction(func):
         logger.debug("handler is coroutine! %r", func)
         return await func(*args, **kwargs)
