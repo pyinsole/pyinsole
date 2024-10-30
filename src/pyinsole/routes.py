@@ -2,38 +2,51 @@ import asyncio
 import logging
 from typing import Callable
 
+from .translators import AbstractTranslator, TranslatedMessage
+from .providers import AbstractProvider
+from .handlers import Handler, AbstractHandler
 from .compat import iscoroutinefunction
-from .handlers import ICallable, IHandler
-from .providers import IProvider
-from .translators import ITranslatedMessage, ITranslator
 
 logger = logging.getLogger(__name__)
 
 
-async def to_coroutine(func, *args, **kwargs):
-    if iscoroutinefunction(func):
-        logger.debug("handler is coroutine! %r", func)
-        return await func(*args, **kwargs)
+async def to_coroutine(handler, *args, **kwargs):
+    if not callable(handler):
+        raise ValueError("handler must be a callable")
 
-    logger.debug("handler will run in a separate thread: %r", func)
-    return await asyncio.to_thread(func, *args, **kwargs)
+    if iscoroutinefunction(handler):
+        logger.debug("handler is coroutine! %r", handler)
+        return await handler(*args, **kwargs)
+
+    if iscoroutinefunction(handler.__call__):
+        fn = handler.__call__
+        logger.debug("handler.__call__ is coroutine! %r", fn)
+        return await fn(*args, **kwargs)
+
+    logger.debug("handler will run in a separate thread: %r", handler)
+    return await asyncio.to_thread(handler, *args, **kwargs)
 
 
 class Route:
     def __init__(
         self,
-        provider: IProvider,
-        handler: ICallable | IHandler,
+        provider: AbstractProvider,
+        handler: Handler,
         *,
         name: str = "default",
-        translator: ITranslator | None = None,
+        translator: AbstractTranslator | None = None,
         error_handler: Callable | None = None,
     ):
-        if not isinstance(provider, IProvider):
+        if not isinstance(provider, AbstractProvider):
             msg = f"invalid provider instance: {provider!r}"
             raise TypeError(msg)
 
-        if translator and not isinstance(translator, ITranslator):
+        # handler must be a callable or a instante of AbstractHandler
+        if not callable(handler):
+            msg = f"handler must be a callable object or implement `AbstractHandler` interface: {handler!r}"
+            raise TypeError(msg)
+
+        if translator and not isinstance(translator, AbstractTranslator):
             msg = f"invalid message translator instance: {translator!r}"
             raise TypeError(msg)
 
@@ -42,28 +55,19 @@ class Route:
             raise TypeError(msg)
 
         self.name = name
+        self.handler = handler
         self.provider = provider
         self.translator = translator
 
         self._error_handler = error_handler
         self._handler_instance = None
 
-        if callable(handler):
-            self.handler = handler
-        else:
-            self.handler = getattr(handler, "handle", None)
-            self._handler_instance = handler
-
-        if not self.handler:
-            msg = f"handler must be a callable object or implement `IHandler` interface: {self.handler!r}"
-            raise TypeError(msg)
-
     def __str__(self):
         return (
             f"<{type(self).__name__}(name={self.name} provider={self.provider!r} handler={self.handler!r})>"
         )
 
-    def prepare_message(self, raw_message) -> ITranslatedMessage:
+    def prepare_message(self, raw_message) -> TranslatedMessage:
         default_message = {"content": raw_message, "metadata": {}}
 
         if not self.translator:
@@ -95,5 +99,5 @@ class Route:
         logger.info("stopping route %s", self)
         self.provider.stop()
 
-        if self._handler_instance:
-            self._handler_instance.stop()
+        if isinstance(self.handler, AbstractHandler):
+            self.handler.stop()

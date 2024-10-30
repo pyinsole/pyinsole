@@ -4,7 +4,7 @@ from http import HTTPStatus
 import botocore.exceptions
 
 from pyinsole.exceptions import ProviderError
-from pyinsole.providers import IProvider
+from pyinsole.providers import AbstractProvider
 from pyinsole.utils import calculate_backoff_multiplier
 
 from .base import BaseSQSProvider
@@ -12,7 +12,7 @@ from .base import BaseSQSProvider
 logger = logging.getLogger(__name__)
 
 
-class SQSProvider(IProvider, BaseSQSProvider):
+class SQSProvider(AbstractProvider, BaseSQSProvider):
     def __init__(self, queue_name, options=None, **kwargs):
         self.queue_name = queue_name
         self._options = options or {}
