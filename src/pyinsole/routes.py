@@ -10,15 +10,21 @@ from .compat import iscoroutinefunction
 logger = logging.getLogger(__name__)
 
 
-async def to_coroutine(handler: Handler, *args, **kwargs):
-    func = handler
+async def to_coroutine(handler, *args, **kwargs):
+    if not callable(handler):
+        raise ValueError("handler must be a callable")
 
-    if iscoroutinefunction(func):
-        logger.debug("handler is coroutine! %r", func)
-        return await func(*args, **kwargs)
+    if iscoroutinefunction(handler):
+        logger.debug("handler is coroutine! %r", handler)
+        return await handler(*args, **kwargs)
 
-    logger.debug("handler will run in a separate thread: %r", func)
-    return await asyncio.to_thread(func, *args, **kwargs)
+    if iscoroutinefunction(handler.__call__):
+        fn = handler.__call__
+        logger.debug("handler.__call__ is coroutine! %r", fn)
+        return await fn(*args, **kwargs)
+
+    logger.debug("handler will run in a separate thread: %r", handler)
+    return await asyncio.to_thread(handler, *args, **kwargs)
 
 
 class Route:

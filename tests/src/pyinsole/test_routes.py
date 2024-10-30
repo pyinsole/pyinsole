@@ -4,7 +4,7 @@ import pytest
 
 from pyinsole.translators import AbstractTranslator, TranslatedMessage
 from pyinsole.handlers import AbstractHandler
-from pyinsole.routes import Route
+from pyinsole.routes import Route, to_coroutine
 
 
 class StringMessageTranslator(AbstractTranslator):
@@ -219,3 +219,53 @@ async def test_deliver_with_message_translator(dummy_provider):
     assert route.prepare_message.called
     assert mock_handler.called
     mock_handler.assert_called_once_with("whatever", {})
+
+
+@pytest.mark.asyncio
+@mock.patch("pyinsole.routes.asyncio.to_thread", new_callable=mock.AsyncMock)
+async def test_to_coroutine_when_wrap_function_with_to_thread_is_expected(to_thread: mock.AsyncMock):
+    def fn():
+        return None
+
+    to_thread.return_value = "blah"
+
+    assert await to_coroutine(fn, "xablau", "xoblin") == "blah"
+    to_thread.assert_awaited_once_with(fn, "xablau", "xoblin")
+
+
+@pytest.mark.asyncio
+@mock.patch("pyinsole.routes.asyncio.to_thread", new_callable=mock.AsyncMock)
+async def test_to_coroutine_when_wrap_class_with_to_thread_is_expected(to_thread: mock.AsyncMock):
+    class Foo:
+        def __call__(self, message: dict, metadata: dict, **kwargs) -> bool:
+            return None
+
+    foo = Foo()
+
+    to_thread.return_value = "blah"
+
+    assert await to_coroutine(foo, "xablau", "xoblin") == "blah"
+    to_thread.assert_awaited_once_with(foo, "xablau", "xoblin")
+
+
+@pytest.mark.asyncio
+@mock.patch("pyinsole.routes.asyncio.to_thread", new_callable=mock.AsyncMock)
+async def test_to_coroutine_when_execute_coroutine_directly_is_expected(to_thread: mock.AsyncMock):
+    async def fn(*args, **kwargs):
+        return True
+
+    assert await to_coroutine(fn, "xablau", "xoblin") is True
+    to_thread.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@mock.patch("pyinsole.routes.asyncio.to_thread", new_callable=mock.AsyncMock)
+async def test_to_coroutine_when_execute_class_directly_is_expected(to_thread: mock.AsyncMock):
+    class Foo:
+        async def __call__(self, *args, **kwargs) -> bool:
+            return True
+
+    foo = Foo()
+
+    assert await to_coroutine(foo, "xablau", "xoblin") is True
+    to_thread.assert_not_awaited()
