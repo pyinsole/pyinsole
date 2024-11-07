@@ -2,9 +2,9 @@ from unittest import mock
 
 import pytest
 
-from pyinsole.translators import AbstractTranslator, TranslatedMessage
 from pyinsole.handlers import AbstractHandler
 from pyinsole.routes import Route, to_coroutine
+from pyinsole.translators import AbstractTranslator, TranslatedMessage
 
 
 class StringMessageTranslator(AbstractTranslator):

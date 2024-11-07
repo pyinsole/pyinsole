@@ -1,30 +1,36 @@
 import asyncio
 import logging
-from typing import Callable
+from collections.abc import Awaitable, Callable
+from functools import partial
+from typing import Any, ParamSpec, TypeVar, overload
 
-from .translators import AbstractTranslator, TranslatedMessage
-from .providers import AbstractProvider
-from .handlers import Handler, AbstractHandler
 from .compat import iscoroutinefunction
+from .handlers import AbstractHandler, Handler
+from .providers import AbstractProvider
+from .translators import AbstractTranslator, TranslatedMessage
 
 logger = logging.getLogger(__name__)
 
+P = ParamSpec("P")
+T = TypeVar("T")
 
-async def to_coroutine(handler, *args, **kwargs):
+
+async def to_coroutine(
+    handler: Callable[P, Awaitable[T]] | Callable[P, T], *args: P.args, **kwargs: P.kwargs
+) -> T:
     if not callable(handler):
         raise ValueError("handler must be a callable")
 
     if iscoroutinefunction(handler):
         logger.debug("handler is coroutine! %r", handler)
-        return await handler(*args, **kwargs)
+        return await handler(*args, **kwargs)  # type: ignore[no-any-return]
 
-    if iscoroutinefunction(handler.__call__):
-        fn = handler.__call__
-        logger.debug("handler.__call__ is coroutine! %r", fn)
-        return await fn(*args, **kwargs)
+    if iscoroutinefunction(handler.__call__):  # type: ignore[operator]
+        logger.debug("handler.__call__ is coroutine! %r", handler)
+        return await handler(*args, **kwargs)  # type: ignore[misc,no-any-return]
 
     logger.debug("handler will run in a separate thread: %r", handler)
-    return await asyncio.to_thread(handler, *args, **kwargs)
+    return await asyncio.to_thread(handler, *args, **kwargs)  # type: ignore[arg-type]
 
 
 class Route:
@@ -35,7 +41,7 @@ class Route:
         *,
         name: str = "default",
         translator: AbstractTranslator | None = None,
-        error_handler: Callable | None = None,
+        error_handler: Callable[[Exception, Any], bool] | None = None,
     ):
         if not isinstance(provider, AbstractProvider):
             msg = f"invalid provider instance: {provider!r}"
@@ -62,13 +68,13 @@ class Route:
         self._error_handler = error_handler
         self._handler_instance = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"<{type(self).__name__}(name={self.name} provider={self.provider!r} handler={self.handler!r})>"
         )
 
-    def prepare_message(self, raw_message) -> TranslatedMessage:
-        default_message = {"content": raw_message, "metadata": {}}
+    def prepare_message(self, raw_message: Any) -> TranslatedMessage:
+        default_message: TranslatedMessage = {"content": raw_message, "metadata": {}}
 
         if not self.translator:
             return default_message
@@ -81,13 +87,13 @@ class Route:
 
         return message
 
-    async def deliver(self, raw_message):
+    async def deliver(self, raw_message: Any) -> bool:
         message = self.prepare_message(raw_message)
         logger.info("delivering message route=%s, message=%r", self, message)
 
-        return await to_coroutine(self.handler, message["content"], message["metadata"])
+        return await to_coroutine(self.handler, message["content"], message["metadata"])  # type: ignore[arg-type]
 
-    async def error_handler(self, exc_info, message):
+    async def error_handler(self, exc_info: Exception, message: Any) -> bool:
         logger.info("error handler process originated by message=%s", message)
 
         if self._error_handler is not None:
@@ -95,7 +101,7 @@ class Route:
 
         return False
 
-    def stop(self):
+    def stop(self) -> None:
         logger.info("stopping route %s", self)
         self.provider.stop()
 

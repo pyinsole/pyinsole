@@ -1,5 +1,5 @@
 import abc
-from typing import Callable, Any
+from typing import Any, Callable
 
 
 class AbstractHandler(abc.ABC):
@@ -31,7 +31,7 @@ class AbstractHandler(abc.ABC):
             Returns `True` if the message processing was successful, and `False` if it failed.
         """
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the handler.
 
         If needed, the handler should perform clean-up actions.

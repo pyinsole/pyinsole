@@ -1,4 +1,5 @@
 import abc
+from typing import Any
 
 
 class AbstractProvider(abc.ABC):
@@ -10,17 +11,17 @@ class AbstractProvider(abc.ABC):
         """
 
     @abc.abstractmethod
-    async def confirm_message(self, message):
+    async def confirm_message(self, message: Any) -> None:
         """Confirm the message processing.
 
         After the message confirmation we should not receive the same message again.
         This usually means we need to delete the message in the provider.
         """
 
-    async def message_not_processed(self, message):
+    async def message_not_processed(self, message: Any) -> None:
         """Perform actions when a message was not processed."""
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the provider.
 
         If needed, the provider should perform clean-up actions.
