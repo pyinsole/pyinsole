@@ -15,9 +15,7 @@ def create_mock_route(messages):
         message_not_processed=mock.AsyncMock(),
     )
 
-    message_translator = mock.Mock(
-        translate=mock.Mock(side_effect=[{"content": message} for message in messages])
-    )
+    message_translator = mock.Mock(translate=mock.Mock(side_effect=[{"content": message} for message in messages]))
     return mock.AsyncMock(
         provider=provider,
         handler=mock.AsyncMock(),
@@ -113,7 +111,7 @@ async def test_dispatch_providers_multiple_routes():
 
     await dispatcher.dispatch(forever=False)
 
-    dispatcher._dispatch_message.assert_has_awaits(
+    dispatcher._dispatch_message.assert_has_awaits(  # noqa: SLF001
         [
             mock.call("message1", route1),
             mock.call("message2", route1),

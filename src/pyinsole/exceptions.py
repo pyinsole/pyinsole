@@ -10,5 +10,5 @@ class PyinsoleError(Exception):
     pass
 
 
-class DeleteMessage(PyinsoleError):
+class DeleteMessage(PyinsoleError):  # noqa: N818
     pass

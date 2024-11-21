@@ -1,6 +1,6 @@
-from pyinsole.ext.aws.translators import SQSMessageTranslator
 from pyinsole.ext.aws.providers import SQSProvider
 from pyinsole.ext.aws.routes import SQSRoute
+from pyinsole.ext.aws.translators import SQSMessageTranslator
 
 
 def test_sqs_route(dummy_handler):

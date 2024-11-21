@@ -4,12 +4,6 @@ import pytest
 
 
 @pytest.fixture
-def queue_url():
-    queue_url = "https://sqs.us-east-1.amazonaws.com/123456789012/queue-name"
-    return {"QueueUrl": queue_url}
-
-
-@pytest.fixture
 def sqs_message():
     message = {"Body": "test"}
     return {"Messages": [message]}
@@ -48,7 +42,7 @@ class ClientContextCreator:
 
 
 @pytest.fixture
-def boto_client_sqs(queue_url, sqs_message):
+def boto_client_sqs(sqs_message):
     mock_client = mock.Mock()
     mock_client.delete_message = mock.AsyncMock()
     mock_client.receive_message = mock.AsyncMock(return_value=sqs_message)
@@ -60,9 +54,7 @@ def boto_client_sqs(queue_url, sqs_message):
 
 @pytest.fixture
 def mock_boto_session_sqs(boto_client_sqs):
-    return mock.patch(
-        "pyinsole.ext.aws.base.session.create_client", return_value=ClientContextCreator(boto_client_sqs)
-    )
+    return mock.patch("pyinsole.ext.aws.base.session.create_client", return_value=ClientContextCreator(boto_client_sqs))
 
 
 @pytest.fixture
@@ -75,6 +67,4 @@ def boto_client_sns(sns_publish):
 
 @pytest.fixture
 def mock_boto_session_sns(boto_client_sns):
-    return mock.patch(
-        "pyinsole.ext.aws.base.session.create_client", return_value=ClientContextCreator(boto_client_sns)
-    )
+    return mock.patch("pyinsole.ext.aws.base.session.create_client", return_value=ClientContextCreator(boto_client_sns))

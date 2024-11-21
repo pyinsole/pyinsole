@@ -1,18 +1,19 @@
 import asyncio
 import logging
-from typing import Callable
+from collections.abc import Callable
 
-from .translators import AbstractTranslator, TranslatedMessage
-from .providers import AbstractProvider
-from .handlers import Handler, AbstractHandler
 from .compat import iscoroutinefunction
+from .handlers import AbstractHandler, Handler
+from .providers import AbstractProvider
+from .translators import AbstractTranslator, TranslatedMessage
 
 logger = logging.getLogger(__name__)
 
 
 async def to_coroutine(handler, *args, **kwargs):
     if not callable(handler):
-        raise ValueError("handler must be a callable")
+        msg = "handler must be a callable"
+        raise TypeError(msg)
 
     if iscoroutinefunction(handler):
         logger.debug("handler is coroutine! %r", handler)
@@ -63,9 +64,7 @@ class Route:
         self._handler_instance = None
 
     def __str__(self):
-        return (
-            f"<{type(self).__name__}(name={self.name} provider={self.provider!r} handler={self.handler!r})>"
-        )
+        return f"<{type(self).__name__}(name={self.name} provider={self.provider!r} handler={self.handler!r})>"
 
     def prepare_message(self, raw_message) -> TranslatedMessage:
         default_message = {"content": raw_message, "metadata": {}}

@@ -23,9 +23,7 @@ async def test_confirm_message(mock_boto_session_sqs, boto_client_sqs):
 
 @pytest.mark.asyncio
 async def test_confirm_message_not_found(mock_boto_session_sqs, boto_client_sqs):
-    error = ClientError(
-        error_response={"ResponseMetadata": {"HTTPStatusCode": 404}}, operation_name="whatever"
-    )
+    error = ClientError(error_response={"ResponseMetadata": {"HTTPStatusCode": 404}}, operation_name="whatever")
     boto_client_sqs.delete_message.side_effect = error
     with mock_boto_session_sqs:
         provider = SQSProvider("queue-url")
@@ -40,9 +38,7 @@ async def test_confirm_message_not_found(mock_boto_session_sqs, boto_client_sqs)
 
 @pytest.mark.asyncio
 async def test_confirm_message_unknown_error(mock_boto_session_sqs, boto_client_sqs):
-    error = ClientError(
-        error_response={"ResponseMetadata": {"HTTPStatusCode": 400}}, operation_name="whatever"
-    )
+    error = ClientError(error_response={"ResponseMetadata": {"HTTPStatusCode": 400}}, operation_name="whatever")
     boto_client_sqs.delete_message.side_effect = error
     with mock_boto_session_sqs:
         provider = SQSProvider("queue-name")
@@ -152,9 +148,7 @@ async def test_backoff_factor_options(mock_boto_session_sqs, boto_client_sqs):
         ({"AttributeNames": ["All"]}, ["All"]),
     ],
 )
-async def test_backoff_factor_options_with_attributes_names(
-    mock_boto_session_sqs, boto_client_sqs, options, expected
-):
+async def test_backoff_factor_options_with_attributes_names(mock_boto_session_sqs, boto_client_sqs, options, expected):
     with mock_boto_session_sqs:
         provider = SQSProvider("queue-name", options={"BackoffFactor": 1.5, **options})
         await provider.fetch_messages()
@@ -206,9 +200,7 @@ async def test_fetch_messages_using_backoff_factor(
     ("error", "expectation"),
     [
         (
-            ClientError(
-                error_response={"Error": {"Code": "InvalidParameterValue"}}, operation_name="whatever"
-            ),
+            ClientError(error_response={"Error": {"Code": "InvalidParameterValue"}}, operation_name="whatever"),
             does_not_raise(),
         ),
         (

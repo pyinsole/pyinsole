@@ -1,19 +1,17 @@
-import asyncio
 import abc
+import asyncio
 import logging
 import signal
+from collections.abc import Callable
 from concurrent.futures import CancelledError
 from contextlib import suppress
-
-from typing import Callable
-
 
 logger = logging.getLogger(__name__)
 
 
 class AbstractRunner:
     @abc.abstractmethod
-    def start_loop(self, debug: bool):
+    def start_loop(self, *, debug: bool):
         """Start the main execution loop for the runner.
 
         Args:
@@ -42,7 +40,7 @@ class AbstractRunner:
 
 
 class Runner(AbstractRunner):
-    def __init__(self, *, on_start_callback: Callable = None, on_stop_callback: Callable = None):
+    def __init__(self, *, on_start_callback: Callable | None = None, on_stop_callback: Callable | None = None):
         self._on_start_callback = on_start_callback
         self._on_stop_callback = on_stop_callback
 
@@ -50,7 +48,7 @@ class Runner(AbstractRunner):
     def loop(self):
         return asyncio.get_event_loop()
 
-    def start_loop(self, debug: bool = False):
+    def start_loop(self, *, debug: bool = False):
         if debug:
             self.loop.set_debug(enabled=debug)
 

@@ -1,5 +1,6 @@
 import abc
-from typing import Callable, Any
+from collections.abc import Callable
+from typing import Any
 
 
 class AbstractHandler(abc.ABC):
