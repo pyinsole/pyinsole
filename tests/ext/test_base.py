@@ -1,4 +1,3 @@
-
 import pytest
 
 from pyinsole.ext.aws.base import BaseSQSProvider

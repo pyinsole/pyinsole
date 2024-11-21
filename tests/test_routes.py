@@ -2,9 +2,9 @@ from unittest import mock
 
 import pytest
 
-from pyinsole.translators import AbstractTranslator, TranslatedMessage
 from pyinsole.handlers import AbstractHandler
 from pyinsole.routes import Route, to_coroutine
+from pyinsole.translators import AbstractTranslator, TranslatedMessage
 
 
 class StringMessageTranslator(AbstractTranslator):
@@ -237,7 +237,7 @@ async def test_to_coroutine_when_wrap_function_with_to_thread_is_expected(to_thr
 @mock.patch("pyinsole.routes.asyncio.to_thread", new_callable=mock.AsyncMock)
 async def test_to_coroutine_when_wrap_class_with_to_thread_is_expected(to_thread: mock.AsyncMock):
     class Foo:
-        def __call__(self, message: dict, metadata: dict, **kwargs) -> bool:
+        def __call__(self, message: dict, metadata: dict, **kwargs) -> bool:  # noqa: ARG002
             return None
 
     foo = Foo()
@@ -251,7 +251,7 @@ async def test_to_coroutine_when_wrap_class_with_to_thread_is_expected(to_thread
 @pytest.mark.asyncio
 @mock.patch("pyinsole.routes.asyncio.to_thread", new_callable=mock.AsyncMock)
 async def test_to_coroutine_when_execute_coroutine_directly_is_expected(to_thread: mock.AsyncMock):
-    async def fn(*args, **kwargs):
+    async def fn(*args, **kwargs):  # noqa: ARG001
         return True
 
     assert await to_coroutine(fn, "xablau", "xoblin") is True
@@ -262,7 +262,7 @@ async def test_to_coroutine_when_execute_coroutine_directly_is_expected(to_threa
 @mock.patch("pyinsole.routes.asyncio.to_thread", new_callable=mock.AsyncMock)
 async def test_to_coroutine_when_execute_class_directly_is_expected(to_thread: mock.AsyncMock):
     class Foo:
-        async def __call__(self, *args, **kwargs) -> bool:
+        async def __call__(self, *args, **kwargs) -> bool:  # noqa: ARG002
             return True
 
     foo = Foo()

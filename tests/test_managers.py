@@ -39,7 +39,7 @@ def test_on_future_errors():
     manager.runner = mock.Mock()
     future = asyncio.Future()
     future.set_exception(ProviderError)
-    manager._on_future_done_callback(future)
+    manager._on_future_done_callback(future)  # noqa: SLF001
 
     assert manager.runner.stop_loop.called
     manager.runner.stop_loop.assert_called_once_with()
@@ -50,7 +50,7 @@ def test_on_future_errors_cancelled():
     manager.runner = mock.Mock()
     future = asyncio.Future()
     future.cancel()
-    manager._on_future_done_callback(future)
+    manager._on_future_done_callback(future)  # noqa: SLF001
 
     assert manager.runner.stop_loop.called
     manager.runner.stop_loop.assert_called_once_with()
@@ -60,7 +60,7 @@ def test_on_loop__stop():
     manager = Manager(routes=[])
     manager.dispatcher = mock.Mock()
     manager._future = mock.Mock()  # noqa: SLF001
-    manager._on_loop_stop_callback()
+    manager._on_loop_stop_callback()  # noqa: SLF001
 
     assert manager.dispatcher.stop.called
     assert manager._future.cancel.called  # noqa: SLF001

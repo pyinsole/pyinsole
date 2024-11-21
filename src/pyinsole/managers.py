@@ -1,11 +1,11 @@
 import asyncio
 import logging
 import os
-from typing import Sequence
+from collections.abc import Sequence
 
 from .dispatchers import AbstractDispatcher, Dispatcher
-from .runners import AbstractRunner, Runner
 from .routes import Route
+from .runners import AbstractRunner, Runner
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class Manager:
 
         self._future: asyncio.Future = None
 
-    def run(self, forever: bool = True, debug: bool = False):
+    def run(self, *, forever: bool = True, debug: bool = False):
         loop = self.runner.loop
 
         self._future = asyncio.ensure_future(
@@ -38,7 +38,7 @@ class Manager:
         if not forever:
             self._future.add_done_callback(self.runner.stop_loop)
 
-        logger.info(f"running pyinsole's manager, pid={os.getpid()}, forever={forever}")
+        logger.info("running pyinsole's manager, pid=%s, forever=%s", os.getpid(), forever)
         self.runner.start_loop(debug=debug)
 
     def _on_future_done_callback(self, future: asyncio.Future):

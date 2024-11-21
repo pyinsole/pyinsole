@@ -1,10 +1,9 @@
-from __future__ import annotations
-
 import abc
 import asyncio
 import logging
 import sys
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from .exceptions import DeleteMessage
 from .routes import Route
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class AbstractDispatcher:
     @abc.abstractmethod
-    def dispatch(self, forever: bool):
+    def dispatch(self, *, forever: bool):
         """Method that connects providers to consumers and dispatches and manages messages in transit.
         Calling Message acknowledgment and unacknowledged methods.
 
@@ -70,6 +69,7 @@ class Dispatcher(AbstractDispatcher):
         self,
         processing_queue: asyncio.Queue,
         tg: asyncio.TaskGroup,
+        *,
         forever: bool = True,
     ):
         routes = list(self.routes)
@@ -81,7 +81,7 @@ class Dispatcher(AbstractDispatcher):
             new_routes = []
             new_tasks = []
 
-            for task, route in zip(tasks, routes):
+            for task, route in zip(tasks, routes, strict=False):
                 if task.done():
                     if exc := task.exception():
                         raise exc
@@ -114,14 +114,12 @@ class Dispatcher(AbstractDispatcher):
             await self._process_message(message, route)
             processing_queue.task_done()
 
-    async def dispatch(self, forever: bool = True):
-        processing_queue = asyncio.Queue(self.queue_size)
+    async def dispatch(self, *, forever: bool = True):
+        processing_queue: asyncio.Queue[tuple[Any, Route]] = asyncio.Queue(self.queue_size)
 
         async with asyncio.TaskGroup() as tg:
-            provider_task = tg.create_task(self._fetch_messages(processing_queue, tg, forever))
-            consumer_tasks = [
-                tg.create_task(self._consume_messages(processing_queue)) for _ in range(self.workers)
-            ]
+            provider_task = tg.create_task(self._fetch_messages(processing_queue, tg, forever=forever))
+            consumer_tasks = [tg.create_task(self._consume_messages(processing_queue)) for _ in range(self.workers)]
 
             async def join():
                 await provider_task
