@@ -1,19 +1,17 @@
-import asyncio
 import abc
+import asyncio
 import logging
 import signal
 from concurrent.futures import CancelledError
 from contextlib import suppress
-
 from typing import Callable
-
 
 logger = logging.getLogger(__name__)
 
 
 class AbstractRunner:
     @abc.abstractmethod
-    def start_loop(self, debug: bool):
+    def start_loop(self, debug: bool) -> None:
         """Start the main execution loop for the runner.
 
         Args:
@@ -25,7 +23,7 @@ class AbstractRunner:
         """
 
     @abc.abstractmethod
-    def stop_loop(self):
+    def stop_loop(self) -> None:
         """Stop the main execution loop for the runner.
 
         This method should be implemented to halt or gracefully terminate the main loop initiated by `start_loop`.
@@ -33,7 +31,7 @@ class AbstractRunner:
         """
 
     @abc.abstractmethod
-    def stop(self):
+    def stop(self) -> None:
         """Stop the runner and clean up any resources.
 
         This method should be implemented to stop the entire runner, including any background processes,
@@ -42,15 +40,20 @@ class AbstractRunner:
 
 
 class Runner(AbstractRunner):
-    def __init__(self, *, on_start_callback: Callable = None, on_stop_callback: Callable = None):
+    def __init__(
+        self,
+        *,
+        on_start_callback: Callable[[], None] | None = None,
+        on_stop_callback: Callable[[], None] | None = None,
+    ):
         self._on_start_callback = on_start_callback
         self._on_stop_callback = on_stop_callback
 
     @property
-    def loop(self):
+    def loop(self) -> asyncio.AbstractEventLoop:
         return asyncio.get_event_loop()
 
-    def start_loop(self, debug: bool = False):
+    def start_loop(self, debug: bool = False) -> None:
         if debug:
             self.loop.set_debug(enabled=debug)
 
@@ -70,12 +73,12 @@ class Runner(AbstractRunner):
             logger.debug("loop.is_running=%s", self.loop.is_running())
             logger.debug("loop.is_closed=%s", self.loop.is_closed())
 
-    def stop_loop(self):
+    def stop_loop(self) -> None:
         if self.loop.is_running():
             # signals loop.run_forever to exit in the next iteration
             self.loop.stop()
 
-    def stop(self):
+    def stop(self) -> None:
         logger.info("stopping pyinsole...")
 
         if self._on_stop_callback:
@@ -85,7 +88,7 @@ class Runner(AbstractRunner):
         with suppress(CancelledError, RuntimeError):
             self._cancel_all_tasks()
 
-    def _cancel_all_tasks(self):
+    def _cancel_all_tasks(self) -> None:
         if not (tasks := asyncio.all_tasks(self.loop)):
             return
 

@@ -37,12 +37,12 @@ aiobotocore = "^2.15.2"
 sentry-sdk = "^2.17.0"
 
 [tool.poetry.group.dev.dependencies]
+mypy = "^1.13.0"
 pre-commit = "^4.0.1"
 pytest = "^8.3.3"
 pytest-asyncio = "^0.24.0"
-pytest-deadfixtures = "^2.2.1"
-pytest-envvars = "^1.2.1"
 pytest-cov = "^5.0.0"
+pytest-deadfixtures = "^2.2.1"
 ruff = "^0.7.1"
 
 [tool.pytest.ini_options]
@@ -50,7 +50,6 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "-vv --cov-report=term-missing --cov=src/pyinsole --cov-branch"
 asyncio_mode = "strict"
-pytestenvvars__env_files = [".env"]
 
 [tool.coverage.report]
 omit = [
@@ -68,6 +67,9 @@ known_first_party = []
 known_local_folder = ["tests", "src"]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 default_section = "THIRDPARTY"
+
+[tool.mypy]
+strict = true
 
 [tool.ruff]
 target-version = "py311"

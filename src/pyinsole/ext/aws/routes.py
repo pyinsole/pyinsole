@@ -1,11 +1,12 @@
-from typing import Callable
+from collections.abc import Callable
+from typing import Any
 
-from pyinsole.routes import Route
 from pyinsole.handlers import Handler
+from pyinsole.routes import Route
 from pyinsole.translators import AbstractTranslator
 
-from .translators import SQSMessageTranslator
 from .providers import SQSProvider
+from .translators import SQSMessageTranslator
 
 
 class SQSRoute(Route):
@@ -14,16 +15,16 @@ class SQSRoute(Route):
         provider_queue: str,
         handler: Handler,
         *,
-        provider_options: dict = None,
-        error_handler: Callable = None,
-        translator: AbstractTranslator = None,
-        **kwargs,
+        provider_options: dict[str, Any] | None = None,
+        translator: AbstractTranslator | None = None,
+        name: str | None = None,
+        error_handler: Callable[[Exception, Any], bool] | None = None,
     ):
         provider_options = provider_options or {}
         provider = SQSProvider(provider_queue, **provider_options)
 
         translator = translator or SQSMessageTranslator()
-        name = kwargs.pop("name", None) or provider_queue
+        name = name or provider_queue
 
         super().__init__(
             provider=provider,
@@ -31,5 +32,4 @@ class SQSRoute(Route):
             name=name,
             translator=translator,
             error_handler=error_handler,
-            **kwargs,
         )

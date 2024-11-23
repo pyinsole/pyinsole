@@ -3,8 +3,8 @@ from __future__ import annotations
 import abc
 import asyncio
 import logging
-import sys
-from typing import Any, Sequence
+from collections.abc import Collection
+from typing import Any
 
 from .exceptions import DeleteMessage
 from .routes import Route
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class AbstractDispatcher:
     @abc.abstractmethod
-    def dispatch(self, forever: bool):
+    async def dispatch(self, forever: bool) -> None:
         """Method that connects providers to consumers and dispatches and manages messages in transit.
         Calling Message acknowledgment and unacknowledged methods.
 
@@ -23,11 +23,14 @@ class AbstractDispatcher:
                 If not, execution will only occur once.
         """
 
+    def stop(self) -> None:
+        pass
+
 
 class Dispatcher(AbstractDispatcher):
     def __init__(
         self,
-        routes: Sequence[Route],
+        routes: Collection[Route],
         queue_size: int | None = None,
         workers: int | None = None,
     ):
@@ -53,8 +56,7 @@ class Dispatcher(AbstractDispatcher):
             logger.warning(msg.format(route.handler, message))
         except Exception as exc:
             logger.exception("%r", exc)  # noqa: TRY401
-            exc_info = sys.exc_info()
-            confirm_message = await route.error_handler(exc_info, message)
+            confirm_message = await route.error_handler(exc, message)
 
         return confirm_message
 
@@ -68,10 +70,10 @@ class Dispatcher(AbstractDispatcher):
 
     async def _fetch_messages(
         self,
-        processing_queue: asyncio.Queue,
+        processing_queue: asyncio.Queue[tuple[Any, Route]],
         tg: asyncio.TaskGroup,
         forever: bool = True,
-    ):
+    ) -> None:
         routes = list(self.routes)
         tasks = [tg.create_task(route.provider.fetch_messages()) for route in routes]
 
@@ -107,15 +109,15 @@ class Dispatcher(AbstractDispatcher):
             routes = new_routes
             tasks = new_tasks
 
-    async def _consume_messages(self, processing_queue: asyncio.Queue) -> None:
+    async def _consume_messages(self, processing_queue: asyncio.Queue[tuple[Any, Route]]) -> None:
         while True:
             message, route = await processing_queue.get()
 
             await self._process_message(message, route)
             processing_queue.task_done()
 
-    async def dispatch(self, forever: bool = True):
-        processing_queue = asyncio.Queue(self.queue_size)
+    async def dispatch(self, forever: bool = True) -> None:
+        processing_queue = asyncio.Queue[tuple[Any, Route]](self.queue_size)
 
         async with asyncio.TaskGroup() as tg:
             provider_task = tg.create_task(self._fetch_messages(processing_queue, tg, forever))
@@ -123,7 +125,7 @@ class Dispatcher(AbstractDispatcher):
                 tg.create_task(self._consume_messages(processing_queue)) for _ in range(self.workers)
             ]
 
-            async def join():
+            async def join() -> None:
                 await provider_task
                 await processing_queue.join()
 

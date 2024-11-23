@@ -1,5 +1,6 @@
 import logging
 from http import HTTPStatus
+from typing import Any
 
 import botocore.exceptions
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class SQSProvider(AbstractProvider, BaseSQSProvider):
-    def __init__(self, queue_name, options=None, **kwargs):
+    def __init__(self, queue_name: str, options: dict[str, Any] | None = None, **kwargs: Any):
         self.queue_name = queue_name
         self._options = options or {}
         self._backoff_factor = self._options.pop("BackoffFactor", None)

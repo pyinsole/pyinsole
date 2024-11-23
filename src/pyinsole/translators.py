@@ -1,9 +1,9 @@
 import abc
-from typing import TypedDict
+from typing import Any, TypedDict
 
 
 class TranslatedMessage(TypedDict):
-    content: str
+    content: Any
     metadata: dict
 
 
