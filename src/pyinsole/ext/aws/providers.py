@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class SQSProvider(AbstractProvider, BaseSQSProvider):
-    def __init__(self, queue_name, options=None, **kwargs):
-        self.queue_name = queue_name
+    def __init__(self, queue_url, options=None, **kwargs):
+        self.queue_url = queue_url
         self._options = options or {}
         self._backoff_factor = self._options.pop("BackoffFactor", None)
         if self._backoff_factor is not None:
@@ -26,16 +26,15 @@ class SQSProvider(AbstractProvider, BaseSQSProvider):
         super().__init__(**kwargs)
 
     def __str__(self):
-        return f"<{type(self).__name__}: {self.queue_name}>"
+        return f"<{type(self).__name__}: {self.queue_url}>"
 
     async def confirm_message(self, message):
         receipt = message["ReceiptHandle"]
         logger.info("confirm message (ack/deletion), receipt=%r", receipt)
 
-        queue_url = await self.get_queue_url(self.queue_name)
         try:
             async with self.get_client() as client:
-                return await client.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt)
+                return await client.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt)
         except botocore.exceptions.ClientError as exc:
             if exc.response["ResponseMetadata"]["HTTPStatusCode"] == HTTPStatus.NOT_FOUND:
                 return True
@@ -56,11 +55,10 @@ class SQSProvider(AbstractProvider, BaseSQSProvider):
                 receipt,
                 custom_visibility_timeout,
             )
-            queue_url = await self.get_queue_url(self.queue_name)
             try:
                 async with self.get_client() as client:
                     return await client.change_message_visibility(
-                        QueueUrl=queue_url,
+                        QueueUrl=self.queue_url,
                         ReceiptHandle=receipt,
                         VisibilityTimeout=custom_visibility_timeout,
                     )
@@ -70,16 +68,15 @@ class SQSProvider(AbstractProvider, BaseSQSProvider):
         return None
 
     async def fetch_messages(self):
-        logger.debug("fetching messages on %s", self.queue_name)
+        logger.debug("fetching messages on %s", self.queue_url)
         try:
-            queue_url = await self.get_queue_url(self.queue_name)
             async with self.get_client() as client:
-                response = await client.receive_message(QueueUrl=queue_url, **self._options)
+                response = await client.receive_message(QueueUrl=self.queue_url, **self._options)
         except (
             botocore.exceptions.BotoCoreError,
             botocore.exceptions.ClientError,
         ) as exc:
-            msg = f"error fetching messages from queue={self.queue_name}: {exc!s}"
+            msg = f"error fetching messages from queue={self.queue_url}: {exc!s}"
             raise ProviderError(msg) from exc
 
         return response.get("Messages", [])
