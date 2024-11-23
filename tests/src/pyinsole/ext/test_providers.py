@@ -11,12 +11,13 @@ from pyinsole.ext.aws.providers import SQSProvider
 @pytest.mark.asyncio
 async def test_confirm_message(mock_boto_session_sqs, boto_client_sqs):
     with mock_boto_session_sqs:
-        provider = SQSProvider("queue-name")
+        provider = SQSProvider("queue-url")
         message = {"ReceiptHandle": "message-receipt-handle"}
         await provider.confirm_message(message)
 
         assert boto_client_sqs.delete_message.call_args == mock.call(
-            QueueUrl=await provider.get_queue_url("queue-name"), ReceiptHandle="message-receipt-handle"
+            QueueUrl="queue-url",
+            ReceiptHandle="message-receipt-handle",
         )
 
 
@@ -27,12 +28,12 @@ async def test_confirm_message_not_found(mock_boto_session_sqs, boto_client_sqs)
     )
     boto_client_sqs.delete_message.side_effect = error
     with mock_boto_session_sqs:
-        provider = SQSProvider("queue-name")
+        provider = SQSProvider("queue-url")
         message = {"ReceiptHandle": "message-receipt-handle-not-found"}
         await provider.confirm_message(message)
 
         assert boto_client_sqs.delete_message.call_args == mock.call(
-            QueueUrl=await provider.get_queue_url("queue-name"),
+            QueueUrl="queue-url",
             ReceiptHandle="message-receipt-handle-not-found",
         )
 
@@ -54,14 +55,14 @@ async def test_confirm_message_unknown_error(mock_boto_session_sqs, boto_client_
 async def test_fetch_messages(mock_boto_session_sqs, boto_client_sqs):
     options = {"WaitTimeSeconds": 5, "MaxNumberOfMessages": 10}
     with mock_boto_session_sqs:
-        provider = SQSProvider("queue-name", options=options)
+        provider = SQSProvider("queue-url", options=options)
         messages = await provider.fetch_messages()
 
         assert len(messages) == 1
         assert messages[0]["Body"] == "test"
 
         assert boto_client_sqs.receive_message.call_args == mock.call(
-            QueueUrl=await provider.get_queue_url("queue-name"),
+            QueueUrl="queue-url",
             WaitTimeSeconds=options.get("WaitTimeSeconds"),
             MaxNumberOfMessages=options.get("MaxNumberOfMessages"),
         )
@@ -72,13 +73,13 @@ async def test_fetch_messages_returns_empty(mock_boto_session_sqs, boto_client_s
     options = {"WaitTimeSeconds": 5, "MaxNumberOfMessages": 10}
     boto_client_sqs.receive_message.return_value = {"Messages": []}
     with mock_boto_session_sqs:
-        provider = SQSProvider("queue-name", options=options)
+        provider = SQSProvider("queue-url", options=options)
         messages = await provider.fetch_messages()
 
         assert messages == []
 
         assert boto_client_sqs.receive_message.call_args == mock.call(
-            QueueUrl=await provider.get_queue_url("queue-name"),
+            QueueUrl="queue-url",
             WaitTimeSeconds=options.get("WaitTimeSeconds"),
             MaxNumberOfMessages=options.get("MaxNumberOfMessages"),
         )
@@ -110,14 +111,14 @@ async def test_fetch_messages_with_botocoreerror(mock_boto_session_sqs, boto_cli
 async def test_custom_visibility_timeout(mock_boto_session_sqs, boto_client_sqs):
     options = {"WaitTimeSeconds": 5, "MaxNumberOfMessages": 10, "VisibilityTimeout": 60}
     with mock_boto_session_sqs:
-        provider = SQSProvider("queue-name", options=options)
+        provider = SQSProvider("queue-url", options=options)
         messages = await provider.fetch_messages()
 
         assert len(messages) == 1
         assert messages[0]["Body"] == "test"
 
         assert boto_client_sqs.receive_message.call_args == mock.call(
-            QueueUrl=await provider.get_queue_url("queue-name"),
+            QueueUrl="queue-url",
             WaitTimeSeconds=options.get("WaitTimeSeconds"),
             MaxNumberOfMessages=options.get("MaxNumberOfMessages"),
             VisibilityTimeout=options.get("VisibilityTimeout"),
@@ -183,7 +184,7 @@ async def test_fetch_messages_using_backoff_factor(
         "VisibilityTimeout": visibility,
     }
     with mock_boto_session_sqs:
-        provider = SQSProvider("queue-name", options=options)
+        provider = SQSProvider("queue-url", options=options)
         message = {"ReceiptHandle": "message-receipt-handle", "Attributes": {"ApproximateReceiveCount": 2}}
 
         with mock.patch(
@@ -194,7 +195,7 @@ async def test_fetch_messages_using_backoff_factor(
             mock_calculate_backoff.assert_called_once_with(2, 1.5)
 
         boto_client_sqs.change_message_visibility.assert_awaited_once_with(
-            QueueUrl=await provider.get_queue_url("queue-name"),
+            QueueUrl="queue-url",
             ReceiptHandle="message-receipt-handle",
             VisibilityTimeout=expected,
         )
@@ -229,14 +230,14 @@ async def test_fetch_messages_change_message_visibility_error(
         "VisibilityTimeout": 30,
     }
     with mock_boto_session_sqs:
-        provider = SQSProvider("queue-name", options=options)
+        provider = SQSProvider("queue-url", options=options)
         message = {"ReceiptHandle": "message-receipt-handle", "Attributes": {"ApproximateReceiveCount": 2}}
 
         with expectation:
             await provider.message_not_processed(message)
 
         boto_client_sqs.change_message_visibility.assert_awaited_once_with(
-            QueueUrl=await provider.get_queue_url("queue-name"),
+            QueueUrl="queue-url",
             ReceiptHandle="message-receipt-handle",
             VisibilityTimeout=mock.ANY,
         )

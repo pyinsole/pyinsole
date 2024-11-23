@@ -50,7 +50,6 @@ class ClientContextCreator:
 @pytest.fixture
 def boto_client_sqs(queue_url, sqs_message):
     mock_client = mock.Mock()
-    mock_client.get_queue_url = mock.AsyncMock(return_value=queue_url)
     mock_client.delete_message = mock.AsyncMock()
     mock_client.receive_message = mock.AsyncMock(return_value=sqs_message)
     mock_client.send_message = mock.AsyncMock(return_value=sqs_send_message)

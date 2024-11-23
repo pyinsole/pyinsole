@@ -28,20 +28,3 @@ class _BotoProvider:
 
 class BaseSQSProvider(_BotoProvider):
     boto_service_name = "sqs"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._cached_queue_urls = {}
-
-    async def get_queue_url(self, queue):
-        if queue and (queue.startswith(("http://", "https://"))):
-            name = queue.split("/")[-1]
-            self._cached_queue_urls[name] = queue
-            queue = name
-
-        if queue not in self._cached_queue_urls:
-            async with self.get_client() as client:
-                response = await client.get_queue_url(QueueName=queue)
-                self._cached_queue_urls[queue] = response["QueueUrl"]
-
-        return self._cached_queue_urls[queue]
