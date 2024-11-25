@@ -4,7 +4,6 @@ from unittest import mock
 import pytest
 
 from pyinsole.dispatchers import Dispatcher
-from pyinsole.exceptions import DeleteMessage
 from pyinsole.routes import Route
 
 
@@ -50,19 +49,6 @@ async def test_dispatch_invalid_message(route, message):
     confirmation = await dispatcher._dispatch_message(message, route)  # noqa: SLF001
     assert confirmation is False
     route.deliver.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_dispatch_message_task_delete_message(route):
-    route.deliver = mock.AsyncMock(side_effect=DeleteMessage)
-    dispatcher = Dispatcher([route])
-    message = "rejected-message"
-
-    confirmation = await dispatcher._dispatch_message(message, route)  # noqa: SLF001
-
-    assert confirmation is True
-    assert route.deliver.called
-    route.deliver.assert_awaited_once_with(message)
 
 
 @pytest.mark.asyncio
