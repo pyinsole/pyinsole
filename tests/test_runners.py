@@ -1,5 +1,4 @@
 import asyncio
-from contextlib import nullcontext as does_not_raise
 from unittest import mock
 
 import pytest
@@ -94,6 +93,5 @@ def test_runner_stop_dont_raise_runtime_error(cancel_all_tasks_mock):
     cancel_all_tasks_mock.side_effect = RuntimeError("faiô!")
     runner = Runner()
 
-    with does_not_raise():
-        runner.loop.stop()
-        runner.stop()
+    assert runner.loop.stop() is None
+    assert runner.stop() is None
