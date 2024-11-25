@@ -1,11 +1,13 @@
 import asyncio
 import logging
 import os
+import signal
+import threading
 from collections.abc import Sequence
+from functools import partial
 
 from .dispatchers import AbstractDispatcher, Dispatcher
 from .routes import Route
-from .runners import AbstractRunner, Runner
 
 logger = logging.getLogger(__name__)
 
@@ -15,49 +17,28 @@ class Manager:
         self,
         routes: Sequence[Route],
         *,
-        runner: AbstractRunner | None = None,
         dispatcher: AbstractDispatcher | None = None,
         queue_size: int | None = None,
         workers: int | None = None,
     ):
-        self.runner = runner or Runner(on_stop_callback=self._on_loop_stop_callback)
         self.dispatcher = dispatcher or Dispatcher(routes, queue_size, workers)
 
-        self._future: asyncio.Future = None
-
     def run(self, *, forever: bool = True, debug: bool = False):
-        loop = self.runner.loop
-
-        self._future = asyncio.ensure_future(
-            self.dispatcher.dispatch(forever=forever),
-            loop=loop,
-        )
-
-        self._future.add_done_callback(self._on_future_done_callback)
-
-        if not forever:
-            self._future.add_done_callback(self.runner.stop_loop)
+        cancellation_event = asyncio.Event()
+        if threading.current_thread() is threading.main_thread():
+            signal.signal(signal.SIGTERM, partial(self.handle_signal, event=cancellation_event))
 
         logger.info("running pyinsole's manager, pid=%s, forever=%s", os.getpid(), forever)
-        self.runner.start_loop(debug=debug)
+        asyncio.run(self._run(cancellation_event, forever=forever), debug=debug)
 
-    def _on_future_done_callback(self, future: asyncio.Future):
-        if future.cancelled():
-            return self.runner.stop_loop()
+    def handle_signal(self, signum, frame, event: asyncio.Event):  # noqa: ARG002
+        event.set()
 
-        exc = future.exception()
+    async def _run(self, cancellation_event: asyncio.Event, *, forever):
+        async with asyncio.TaskGroup() as tasks:
+            dispatcher_task = tasks.create_task(self.dispatcher.dispatch(forever=forever))
+            cancellation_task = tasks.create_task(cancellation_event.wait())
+            await asyncio.wait([dispatcher_task, cancellation_task], return_when=asyncio.FIRST_COMPLETED)
 
-        # Unhandled errors crashes the event loop execution
-        if isinstance(exc, BaseException):
-            logger.critical("fatal error caught: %r", exc)
-            self.runner.stop_loop()
-            return None
-        return None
-
-    def _on_loop_stop_callback(self):
-        logger.info("cancelling pyinsole's manager dispatcher operations ...")
-
-        if self._future:
-            self._future.cancel()
-
-        self.dispatcher.stop()
+            if not dispatcher_task.done():
+                dispatcher_task.cancel()
