@@ -5,7 +5,6 @@ import sys
 from collections.abc import Sequence
 from typing import Any
 
-from .exceptions import DeleteMessage
 from .routes import Route
 
 logger = logging.getLogger(__name__)
@@ -44,9 +43,6 @@ class Dispatcher(AbstractDispatcher):
 
         try:
             confirm_message = await route.deliver(message)
-        except DeleteMessage:
-            logger.info("explicit message deletion\n%s\n", message)
-            confirm_message = True
         except asyncio.CancelledError:
             msg = '"{!r}" was cancelled, the message will not be acknowledged:\n{}\n'
             logger.warning(msg.format(route.handler, message))

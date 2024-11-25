@@ -8,7 +8,3 @@ class ProviderRuntimeError(ProviderError):
 
 class PyinsoleError(Exception):
     pass
-
-
-class DeleteMessage(PyinsoleError):  # noqa: N818
-    pass
