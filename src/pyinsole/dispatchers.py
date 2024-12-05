@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class AbstractDispatcher:
     @abc.abstractmethod
-    def dispatch(self, *, forever: bool):
+    def dispatch(self, *, cancellation_token: asyncio.Event | None = None, forever: bool = True):
         """Method that connects providers to consumers and dispatches and manages messages in transit.
         Calling Message acknowledgment and unacknowledged methods.
 
@@ -63,11 +63,15 @@ class Dispatcher(AbstractDispatcher):
 
         return confirmation
 
+    def _check_cancellation(self, cancellation_token: asyncio.Event | None) -> bool:
+        return cancellation_token is not None and cancellation_token.is_set()
+
     async def _fetch_messages(
         self,
         processing_queue: asyncio.Queue,
         tg: asyncio.TaskGroup,
         *,
+        cancellation_token: asyncio.Event | None = None,
         forever: bool = True,
     ):
         routes = list(self.routes)
@@ -87,7 +91,7 @@ class Dispatcher(AbstractDispatcher):
                     for message in task.result():
                         await processing_queue.put((message, route))
 
-                    if forever:
+                    if forever and not self._check_cancellation(cancellation_token):
                         # when execute forever, we should reappending a new task that was
                         # completed...
                         new_routes.append(route)
@@ -112,14 +116,16 @@ class Dispatcher(AbstractDispatcher):
             await self._process_message(message, route)
             processing_queue.task_done()
 
-    async def dispatch(self, *, forever: bool = True):
+    async def dispatch(self, *, cancellation_token: asyncio.Event | None = None, forever: bool = True):
         processing_queue: asyncio.Queue[tuple[Any, Route]] = asyncio.Queue(self.queue_size)
         async with AsyncExitStack() as exit_stack:
             for route in self.routes:
                 await exit_stack.enter_async_context(route)
 
             async with asyncio.TaskGroup() as tg:
-                provider_task = tg.create_task(self._fetch_messages(processing_queue, tg, forever=forever))
+                provider_task = tg.create_task(
+                    self._fetch_messages(processing_queue, tg, cancellation_token=cancellation_token, forever=forever)
+                )
                 consumer_tasks = [tg.create_task(self._consume_messages(processing_queue)) for _ in range(self.workers)]
 
                 async def join():
