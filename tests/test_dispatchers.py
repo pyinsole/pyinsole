@@ -72,9 +72,9 @@ async def test_dispatch_message_task_cancel(route):
     dispatcher = Dispatcher([route])
     message = "message"
 
-    confirmation = await dispatcher._dispatch_message(message, route)  # noqa: SLF001
+    with pytest.raises(asyncio.CancelledError):
+        await dispatcher._dispatch_message(message, route)  # noqa: SLF001
 
-    assert confirmation is False
     route.deliver.assert_awaited_once_with(message)
 
 
