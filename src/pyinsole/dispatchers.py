@@ -46,6 +46,7 @@ class Dispatcher(AbstractDispatcher):
         except asyncio.CancelledError:
             msg = '"{!r}" was cancelled, the message will not be acknowledged:\n{}\n'
             logger.warning(msg.format(route.handler, message))
+            raise
         except Exception as exc:
             logger.exception("%r", exc)  # noqa: TRY401
             exc_info = sys.exc_info()
