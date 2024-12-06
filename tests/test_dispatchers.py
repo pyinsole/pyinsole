@@ -86,6 +86,8 @@ async def test_dispatch_providers(route):
     await dispatcher.dispatch(forever=False)
 
     dispatcher._dispatch_message.assert_awaited_once_with("message", route)  # noqa: SLF001
+    route.__aenter__.assert_awaited_once()
+    route.__aexit__.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -106,6 +108,11 @@ async def test_dispatch_providers_multiple_routes():
         any_order=True,
     )
 
+    route1.__aenter__.assert_awaited_once()
+    route1.__aexit__.assert_awaited_once()
+    route2.__aenter__.assert_awaited_once()
+    route2.__aexit__.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_dispatch_providers_with_error(route):
@@ -116,12 +123,5 @@ async def test_dispatch_providers_with_error(route):
         await dispatcher.dispatch(forever=False)
 
     assert exc_info.value.subgroup(ValueError) is not None
-
-
-def test_dispatcher_stop(route):
-    route.stop = mock.Mock()
-    dispatcher = Dispatcher([route])
-
-    dispatcher.stop()
-
-    assert route.stop.called
+    route.__aenter__.assert_awaited_once()
+    route.__aexit__.assert_awaited_once()

@@ -150,30 +150,36 @@ async def test_handler_invalid(dummy_provider):
         Route(dummy_provider, "invalid-handler")
 
 
-def test_route_stop(dummy_provider):
-    dummy_provider.stop = mock.Mock()
-    route = Route(dummy_provider, handler=mock.Mock())
-    route.stop()
+@pytest.mark.asyncio
+async def test_route_lifecycle(dummy_provider):
+    dummy_provider.__aenter__ = mock.AsyncMock()
+    dummy_provider.__aexit__ = mock.AsyncMock()
+    async with Route(dummy_provider, handler=mock.Mock()):
+        pass
 
-    assert dummy_provider.stop.called
+    assert dummy_provider.__aenter__.awaited
+    assert dummy_provider.__aexit__.awaited
 
 
-def test_route_stop_with_handler_stop(dummy_provider):
+@pytest.mark.asyncio
+async def test_route_lifecycle_with_handler_stop(dummy_provider):
     class Handler(AbstractHandler):
-        def __call__(self, *args, **kwargs) -> bool:
-            pass
+        def __call__(self, *args, **kwargs) -> bool:  # noqa: ARG002
+            return True
 
         def stop(self):
             pass
 
-    dummy_provider.stop = mock.Mock()
+    dummy_provider.__aenter__ = mock.AsyncMock()
+    dummy_provider.__aexit__ = mock.AsyncMock()
     handler = Handler()
     handler.stop = mock.Mock()
 
-    route = Route(dummy_provider, handler)
-    route.stop()
+    async with Route(dummy_provider, handler):
+        pass
 
-    assert dummy_provider.stop.called
+    assert dummy_provider.__aenter__.awaited
+    assert dummy_provider.__aexit__.awaited
     assert handler.stop.called
 
 
@@ -238,7 +244,7 @@ async def test_to_coroutine_when_wrap_function_with_to_thread_is_expected(to_thr
 async def test_to_coroutine_when_wrap_class_with_to_thread_is_expected(to_thread: mock.AsyncMock):
     class Foo:
         def __call__(self, message: dict, metadata: dict, **kwargs) -> bool:  # noqa: ARG002
-            return None
+            return True
 
     foo = Foo()
 
