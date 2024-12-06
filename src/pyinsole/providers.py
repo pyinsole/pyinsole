@@ -1,7 +1,14 @@
 import abc
+from contextlib import AbstractAsyncContextManager
 
 
-class AbstractProvider(abc.ABC):
+class AbstractProvider(AbstractAsyncContextManager):
+    """
+    Abstract message provider.
+
+    This class is used internally as a Context Manager.
+    """
+
     @abc.abstractmethod
     async def fetch_messages(self) -> list:
         """Return a sequence of messages to be processed.
@@ -20,9 +27,5 @@ class AbstractProvider(abc.ABC):
     async def message_not_processed(self, message):
         """Perform actions when a message was not processed."""
 
-    def stop(self):
-        """Stop the provider.
-
-        If needed, the provider should perform clean-up actions.
-        This method is called whenever we need to shutdown the provider.
-        """
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        pass

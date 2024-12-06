@@ -3,6 +3,7 @@ import asyncio
 import logging
 import sys
 from collections.abc import Sequence
+from contextlib import AsyncExitStack
 from typing import Any
 
 from .routes import Route
@@ -113,22 +114,21 @@ class Dispatcher(AbstractDispatcher):
 
     async def dispatch(self, *, forever: bool = True):
         processing_queue: asyncio.Queue[tuple[Any, Route]] = asyncio.Queue(self.queue_size)
+        async with AsyncExitStack() as exit_stack:
+            for route in self.routes:
+                await exit_stack.enter_async_context(route)
 
-        async with asyncio.TaskGroup() as tg:
-            provider_task = tg.create_task(self._fetch_messages(processing_queue, tg, forever=forever))
-            consumer_tasks = [tg.create_task(self._consume_messages(processing_queue)) for _ in range(self.workers)]
+            async with asyncio.TaskGroup() as tg:
+                provider_task = tg.create_task(self._fetch_messages(processing_queue, tg, forever=forever))
+                consumer_tasks = [tg.create_task(self._consume_messages(processing_queue)) for _ in range(self.workers)]
 
-            async def join():
-                await provider_task
-                await processing_queue.join()
+                async def join():
+                    await provider_task
+                    await processing_queue.join()
 
-                for consumer_task in consumer_tasks:
-                    consumer_task.cancel()
+                    for consumer_task in consumer_tasks:
+                        consumer_task.cancel()
 
-                await asyncio.gather(*consumer_tasks, return_exceptions=True)
+                    await asyncio.gather(*consumer_tasks, return_exceptions=True)
 
-            tg.create_task(join())
-
-    def stop(self) -> None:
-        for route in self.routes:
-            route.stop()
+                tg.create_task(join())

@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from collections.abc import Callable
+from contextlib import AbstractAsyncContextManager, AsyncExitStack
 
 from .compat import iscoroutinefunction
 from .handlers import AbstractHandler, Handler
@@ -28,7 +29,7 @@ async def to_coroutine(handler, *args, **kwargs):
     return await asyncio.to_thread(handler, *args, **kwargs)
 
 
-class Route:
+class Route(AbstractAsyncContextManager):
     def __init__(
         self,
         provider: AbstractProvider,
@@ -67,7 +68,7 @@ class Route:
         return f"<{type(self).__name__}(name={self.name} provider={self.provider!r} handler={self.handler!r})>"
 
     def prepare_message(self, raw_message) -> TranslatedMessage:
-        default_message = {"content": raw_message, "metadata": {}}
+        default_message: TranslatedMessage = {"content": raw_message, "metadata": {}}
 
         if not self.translator:
             return default_message
@@ -94,9 +95,16 @@ class Route:
 
         return False
 
-    def stop(self):
-        logger.info("stopping route %s", self)
-        self.provider.stop()
+    async def __aenter__(self):
+        async with AsyncExitStack() as exit_stack:
+            await exit_stack.enter_async_context(self.provider)
+            if isinstance(self.handler, AbstractHandler):
+                exit_stack.callback(self.handler.stop)
+            self._exit_stack = exit_stack.pop_all()
+        return await super().__aenter__()
 
-        if isinstance(self.handler, AbstractHandler):
-            self.handler.stop()
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        logger.info("stopping route %s", self)
+
+        if hasattr(self, "_exit_stack"):
+            await self._exit_stack.aclose()

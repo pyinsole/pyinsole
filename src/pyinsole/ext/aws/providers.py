@@ -1,4 +1,5 @@
 import logging
+from contextlib import AsyncExitStack
 from http import HTTPStatus
 
 import botocore.exceptions
@@ -15,6 +16,7 @@ class SQSProvider(AbstractProvider, BaseSQSProvider):
     def __init__(self, queue_url, options=None, **kwargs):
         self.queue_url = queue_url
         self._options = options or {}
+        self._client = kwargs.get("sqs_client")
 
         super().__init__(**kwargs)
 
@@ -26,8 +28,7 @@ class SQSProvider(AbstractProvider, BaseSQSProvider):
         logger.info("confirm message (ack/deletion), receipt=%r", receipt)
 
         try:
-            async with self.get_client() as client:
-                return await client.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt)
+            return await self._client.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt)
         except botocore.exceptions.ClientError as exc:
             if exc.response["ResponseMetadata"]["HTTPStatusCode"] == HTTPStatus.NOT_FOUND:
                 return True
@@ -37,8 +38,7 @@ class SQSProvider(AbstractProvider, BaseSQSProvider):
     async def fetch_messages(self):
         logger.debug("fetching messages on %s", self.queue_url)
         try:
-            async with self.get_client() as client:
-                response = await client.receive_message(QueueUrl=self.queue_url, **self._options)
+            response = await self._client.receive_message(QueueUrl=self.queue_url, **self._options)
         except (
             botocore.exceptions.BotoCoreError,
             botocore.exceptions.ClientError,
@@ -48,6 +48,16 @@ class SQSProvider(AbstractProvider, BaseSQSProvider):
 
         return response.get("Messages", [])
 
-    def stop(self):
-        logger.info("stopping %s", self)
-        return super().stop()
+    async def __aenter__(self):
+        if not self._client:
+            async with AsyncExitStack() as exit_stack:
+                self._client = await exit_stack.enter_async_context(self.get_client())
+
+                self._exit_stack = exit_stack.pop_all()
+
+        return await super().__aenter__()
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        if hasattr(self, "_exit_stack"):
+            await self._exit_stack.aclose()
+        return await super().__aexit__(exc_type, exc_value, traceback)
