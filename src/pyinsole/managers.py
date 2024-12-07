@@ -23,22 +23,41 @@ class Manager:
     ):
         self.dispatcher = dispatcher or Dispatcher(routes, queue_size, workers)
 
-    def run(self, *, forever: bool = True, debug: bool = False):
-        cancellation_event = asyncio.Event()
+    def run(self, *, graceful_timeout: int = 30, forever: bool = True, debug: bool = False):
+        cancellation_token = asyncio.Event()
         if threading.current_thread() is threading.main_thread():
-            signal.signal(signal.SIGTERM, partial(self.handle_signal, event=cancellation_event))
+            signal.signal(signal.SIGTERM, partial(self.handle_signal, event=cancellation_token))
 
         logger.info("running pyinsole's manager, pid=%s, forever=%s", os.getpid(), forever)
-        asyncio.run(self._run(cancellation_event, forever=forever), debug=debug)
+        asyncio.run(
+            self._run(
+                cancellation_token=cancellation_token,
+                graceful_timeout=graceful_timeout,
+                forever=forever,
+            ),
+            debug=debug,
+        )
 
     def handle_signal(self, signum, frame, event: asyncio.Event):  # noqa: ARG002
         event.set()
 
-    async def _run(self, cancellation_event: asyncio.Event, *, forever):
+    async def _run(self, *, cancellation_token: asyncio.Event, graceful_timeout: int, forever):
         async with asyncio.TaskGroup() as tasks:
-            dispatcher_task = tasks.create_task(self.dispatcher.dispatch(forever=forever))
-            cancellation_task = tasks.create_task(cancellation_event.wait())
-            await asyncio.wait([dispatcher_task, cancellation_task], return_when=asyncio.FIRST_COMPLETED)
+            dispatcher_task = tasks.create_task(
+                self.dispatcher.dispatch(cancellation_token=cancellation_token, forever=forever)
+            )
+            cancellation_task = tasks.create_task(cancellation_token.wait())
 
-            if not dispatcher_task.done():
-                dispatcher_task.cancel()
+            async def handle_cancellation():
+                await asyncio.wait([cancellation_task, dispatcher_task], return_when=asyncio.FIRST_COMPLETED)
+
+                if not dispatcher_task.done():
+                    try:
+                        async with asyncio.timeout(graceful_timeout):
+                            await dispatcher_task
+                    except TimeoutError:
+                        dispatcher_task.cancel()
+                else:
+                    cancellation_task.cancel()
+
+            tasks.create_task(handle_cancellation())

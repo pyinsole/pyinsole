@@ -9,7 +9,7 @@ from pyinsole.routes import Route
 
 def create_mock_route(messages):
     provider = mock.AsyncMock(
-        fetch_messages=mock.AsyncMock(side_effect=[messages]),
+        fetch_messages=mock.AsyncMock(return_value=messages),
         confirm_message=mock.AsyncMock(),
         message_not_processed=mock.AsyncMock(),
     )
@@ -88,6 +88,36 @@ async def test_dispatch_providers(route):
     dispatcher._dispatch_message.assert_awaited_once_with("message", route)  # noqa: SLF001
     route.__aenter__.assert_awaited_once()
     route.__aexit__.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_dispatch_providers_forever(route):
+    dispatcher = Dispatcher([route])
+    dispatcher._dispatch_message = mock.AsyncMock()  # noqa: SLF001
+
+    with pytest.raises(TimeoutError):
+        async with asyncio.timeout(5):
+            await dispatcher.dispatch(forever=True)
+
+    assert dispatcher._dispatch_message.await_count > 0  # noqa: SLF001
+
+
+@pytest.mark.asyncio
+async def test_dispatch_providers_cancellation(route):
+    dispatcher = Dispatcher([route])
+    cancellation_token = asyncio.Event()
+    dispatcher._dispatch_message = mock.AsyncMock()  # noqa: SLF001
+
+    async def wait_and_cancel():
+        await asyncio.sleep(2)
+        cancellation_token.set()
+
+    async with asyncio.timeout(5):
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(dispatcher.dispatch(cancellation_token=cancellation_token, forever=True))
+            tg.create_task(wait_and_cancel())
+
+    assert dispatcher._dispatch_message.await_count > 0  # noqa: SLF001
 
 
 @pytest.mark.asyncio
