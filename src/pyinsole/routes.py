@@ -3,7 +3,7 @@ import logging
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager, AsyncExitStack
 
-from .compat import iscoroutinefunction
+from ._compat import iscoroutinefunction
 from .handlers import AbstractHandler, Handler
 from .providers import AbstractProvider
 from .translators import AbstractTranslator, TranslatedMessage
