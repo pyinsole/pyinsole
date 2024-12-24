@@ -74,6 +74,7 @@ dependencies = [
   "pytest-deadfixtures",
   "pytest",
 ]
+features = ["sentry"]
 
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
