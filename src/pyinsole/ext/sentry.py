@@ -1,11 +1,11 @@
-from sentry_sdk import Hub
+import sentry_sdk
 
 
-def sentry_handler(sdk_or_hub: Hub, *, delete_message: bool = False):
-    async def send_to_sentry(exc_info, message):
-        with sdk_or_hub.push_scope() as scope:
-            scope.set_extra("message", message)
-            sdk_or_hub.capture_exception(exc_info)
+def sentry_handler(*, delete_message: bool = False):
+    async def send_to_sentry(exc_info: BaseException, message: str):
+        scope: sentry_sdk.Scope = sentry_sdk.get_current_scope()
+        scope.set_extra("message", message)
+        sentry_sdk.capture_exception(exc_info)
         return delete_message
 
     return send_to_sentry
