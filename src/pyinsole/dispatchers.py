@@ -70,45 +70,18 @@ class Dispatcher(AbstractDispatcher):
     async def _fetch_messages(
         self,
         processing_queue: asyncio.Queue,
-        tg: asyncio.TaskGroup,
+        route: Route,
         *,
         cancellation_token: asyncio.Event | None = None,
         forever: bool = True,
     ):
-        routes = list(self.routes)
-        tasks = [tg.create_task(route.provider.fetch_messages()) for route in routes]
+        while True:
+            messages = await route.provider.fetch_messages()
+            for message in messages:
+                await processing_queue.put((message, route))
 
-        while routes or tasks:
-            await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-
-            new_routes = []
-            new_tasks = []
-
-            for task, route in zip(tasks, routes, strict=False):
-                if task.done():
-                    if exc := task.exception():
-                        raise exc
-
-                    for message in task.result():
-                        await processing_queue.put((message, route))
-
-                    if forever and not self._check_cancellation(cancellation_token):
-                        # when execute forever, we should reappending a new task that was
-                        # completed...
-                        new_routes.append(route)
-                        new_tasks.append(tg.create_task(route.provider.fetch_messages()))
-
-                    # when it isn't forever, the list will decrease in each interation...
-                    # decreasing one route and one task.
-                    # after all tasks are done, the while will stop
-
-                else:
-                    # reappending task not done yet...
-                    new_routes.append(route)
-                    new_tasks.append(task)
-
-            routes = new_routes
-            tasks = new_tasks
+            if (not forever) or (self._check_cancellation(cancellation_token)):
+                break
 
     async def _consume_messages(self, processing_queue: asyncio.Queue) -> None:
         while True:
@@ -125,13 +98,21 @@ class Dispatcher(AbstractDispatcher):
                 await exit_stack.enter_async_context(route)
 
             async with asyncio.TaskGroup() as tg:
-                provider_task = tg.create_task(
-                    self._fetch_messages(processing_queue, tg, cancellation_token=cancellation_token, forever=forever)
-                )
+                provider_tasks = [
+                    tg.create_task(
+                        self._fetch_messages(
+                            processing_queue,
+                            route,
+                            cancellation_token=cancellation_token,
+                            forever=forever,
+                        )
+                    )
+                    for route in self.routes
+                ]
                 consumer_tasks = [tg.create_task(self._consume_messages(processing_queue)) for _ in range(self.workers)]
 
                 async def join():
-                    await provider_task
+                    await asyncio.wait(provider_tasks)
                     await processing_queue.join()
 
                     for consumer_task in consumer_tasks:
