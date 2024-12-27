@@ -1,12 +1,10 @@
 import abc
 from typing import Any, Generic, TypeVar
 
-from pyinsole.handlers import AbstractHandler
-
 T = TypeVar("T")
 
 
-class AsyncHandler(AbstractHandler):
+class AsyncHandler:
     """Helper class that provides a standard way to create asyncio-compatible handlers."""
 
     @abc.abstractmethod
@@ -38,7 +36,7 @@ class AsyncHandler(AbstractHandler):
         return await self.process(message, metadata=metadata, **kwargs)
 
 
-class AsyncModelHandler(Generic[T], AbstractHandler):
+class AsyncModelHandler(Generic[T]):
     """
     Helper class that provides a standard way to create asyncio-compatible handlers.
 

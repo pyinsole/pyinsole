@@ -2,7 +2,6 @@ from unittest import mock
 
 import pytest
 
-from pyinsole.handlers import AbstractHandler
 from pyinsole.routes import Route
 from pyinsole.translators import AbstractTranslator, TranslatedMessage
 
@@ -116,7 +115,7 @@ async def test_error_handler_coroutine(dummy_provider):
 
 @pytest.mark.asyncio
 async def test_handler_class_based(dummy_provider):
-    class Handler(AbstractHandler):
+    class Handler:
         async def __call__(self, *args, **kwargs):
             pass
 
@@ -159,28 +158,6 @@ async def test_route_lifecycle(dummy_provider):
 
     assert dummy_provider.__aenter__.awaited
     assert dummy_provider.__aexit__.awaited
-
-
-@pytest.mark.asyncio
-async def test_route_lifecycle_with_handler_stop(dummy_provider):
-    class Handler(AbstractHandler):
-        async def __call__(self, *args, **kwargs) -> bool:  # noqa: ARG002
-            return True
-
-        def stop(self):
-            pass
-
-    dummy_provider.__aenter__ = mock.AsyncMock()
-    dummy_provider.__aexit__ = mock.AsyncMock()
-    handler = Handler()
-    handler.stop = mock.Mock()
-
-    async with Route(dummy_provider, handler):
-        pass
-
-    assert dummy_provider.__aenter__.awaited
-    assert dummy_provider.__aexit__.awaited
-    assert handler.stop.called
 
 
 # FIXME: Improve all test_deliver* tests

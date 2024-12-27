@@ -2,7 +2,7 @@ import logging
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager, AsyncExitStack
 
-from .handlers import AbstractHandler, Handler
+from .handlers import Handler
 from .providers import AbstractProvider
 from .translators import AbstractTranslator, TranslatedMessage
 from .utils import is_async_callable
@@ -78,8 +78,6 @@ class Route(AbstractAsyncContextManager):
     async def __aenter__(self):
         async with AsyncExitStack() as exit_stack:
             await exit_stack.enter_async_context(self.provider)
-            if isinstance(self.handler, AbstractHandler):
-                exit_stack.callback(self.handler.stop)
             self._exit_stack = exit_stack.pop_all()
         return await super().__aenter__()
 
