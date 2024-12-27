@@ -9,7 +9,7 @@ from pyinsole.routes import Route
 
 @pytest.fixture
 def dummy_route(dummy_provider):
-    return Route(dummy_provider, handler=mock.Mock())
+    return Route(dummy_provider, handler=mock.AsyncMock())
 
 
 def test_dispatcher(dummy_route):

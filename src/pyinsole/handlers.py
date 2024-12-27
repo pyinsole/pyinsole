@@ -5,7 +5,7 @@ from typing import Any
 
 class AbstractHandler(abc.ABC):
     @abc.abstractmethod
-    def __call__(self, message: dict, metadata: dict, **kwargs) -> bool:
+    async def __call__(self, message: dict, metadata: dict, **kwargs) -> bool:
         """Process a given message and its associated metadata, and return a status.
 
         This abstract method should be implemented by subclasses to handle and process the

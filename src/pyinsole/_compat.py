@@ -1,8 +1,6 @@
 import sys
 
-PY312 = sys.version_info >= (3, 12)
-
-if PY312:
+if sys.version_info >= (3, 12):
     from inspect import iscoroutinefunction
     from typing import override
 else:
@@ -10,8 +8,14 @@ else:
 
     from typing_extensions import override
 
+if sys.version_info >= (3, 13):
+    from typing import TypeIs
+else:
+    from typing_extensions import TypeIs
+
 
 __all__ = [
     "iscoroutinefunction",
     "override",
+    "TypeIs",
 ]

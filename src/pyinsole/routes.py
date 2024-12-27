@@ -1,32 +1,13 @@
-import asyncio
 import logging
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager, AsyncExitStack
 
-from ._compat import iscoroutinefunction
 from .handlers import AbstractHandler, Handler
 from .providers import AbstractProvider
 from .translators import AbstractTranslator, TranslatedMessage
+from .utils import is_async_callable
 
 logger = logging.getLogger(__name__)
-
-
-async def to_coroutine(handler, *args, **kwargs):
-    if not callable(handler):
-        msg = "handler must be a callable"
-        raise TypeError(msg)
-
-    if iscoroutinefunction(handler):
-        logger.debug("handler is coroutine! %r", handler)
-        return await handler(*args, **kwargs)
-
-    if iscoroutinefunction(handler.__call__):
-        fn = handler.__call__
-        logger.debug("handler.__call__ is coroutine! %r", fn)
-        return await fn(*args, **kwargs)
-
-    logger.debug("handler will run in a separate thread: %r", handler)
-    return await asyncio.to_thread(handler, *args, **kwargs)
 
 
 class Route(AbstractAsyncContextManager):
@@ -43,9 +24,8 @@ class Route(AbstractAsyncContextManager):
             msg = f"invalid provider instance: {provider!r}"
             raise TypeError(msg)
 
-        # handler must be a callable or a instante of AbstractHandler
-        if not callable(handler):
-            msg = f"handler must be a callable object or implement `AbstractHandler` interface: {handler!r}"
+        if not is_async_callable(handler):
+            msg = f"handler must be a coroutine function: {handler!r}"
             raise TypeError(msg)
 
         if translator and not isinstance(translator, AbstractTranslator):
@@ -85,13 +65,13 @@ class Route(AbstractAsyncContextManager):
         message = self.prepare_message(raw_message)
         logger.info("delivering message route=%s, message=%r", self, message)
 
-        return await to_coroutine(self.handler, message["content"], message["metadata"])
+        return await self.handler(message["content"], message["metadata"])
 
     async def error_handler(self, exc_info, message):
         logger.info("error handler process originated by message=%s", message)
 
         if self._error_handler is not None:
-            return await to_coroutine(self._error_handler, exc_info, message)
+            return await self._error_handler(exc_info, message)
 
         return False
 

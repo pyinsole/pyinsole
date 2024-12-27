@@ -6,7 +6,7 @@ from pyinsole.translators import AbstractTranslator
 
 @pytest.fixture
 def dummy_handler():
-    def handler(message, *args):  # noqa: ARG001
+    async def handler(message, *args):  # noqa: ARG001
         msg = "I should not be called"
         raise AssertionError(msg)
 

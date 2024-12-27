@@ -3,7 +3,7 @@ from unittest import mock
 import pytest
 
 from pyinsole.handlers import AbstractHandler
-from pyinsole.routes import Route, to_coroutine
+from pyinsole.routes import Route
 from pyinsole.translators import AbstractTranslator, TranslatedMessage
 
 
@@ -13,7 +13,7 @@ class StringMessageTranslator(AbstractTranslator):
 
 
 def test_provider(dummy_provider):
-    route = Route(dummy_provider, handler=mock.Mock())
+    route = Route(dummy_provider, handler=mock.AsyncMock())
     assert route.provider is dummy_provider
 
 
@@ -23,30 +23,30 @@ def test_provider_invalid():
 
 
 def test_name(dummy_provider):
-    route = Route(dummy_provider, handler=mock.Mock(), name="foo")
+    route = Route(dummy_provider, handler=mock.AsyncMock(), name="foo")
     assert route.name == "foo"
 
 
 def test_translator(dummy_provider):
     translator = StringMessageTranslator()
-    route = Route(dummy_provider, handler=mock.Mock(), translator=translator)
+    route = Route(dummy_provider, handler=mock.AsyncMock(), translator=translator)
     assert isinstance(route.translator, StringMessageTranslator)
 
 
 def test_default_translator(dummy_provider):
-    route = Route(dummy_provider, handler=mock.Mock())
+    route = Route(dummy_provider, handler=mock.AsyncMock())
     assert route.translator is None
 
 
 def test_translator_invalid(dummy_provider):
     with pytest.raises(TypeError):
-        Route(dummy_provider, handler=mock.Mock(), translator="invalid")
+        Route(dummy_provider, handler=mock.AsyncMock(), translator="invalid")
 
 
 def test_prepare_message_translator(dummy_provider):
     translator = StringMessageTranslator()
     translator.translate = mock.Mock(return_value={"content": "foobar", "metadata": {}})
-    route = Route(dummy_provider, mock.Mock(), translator=translator)
+    route = Route(dummy_provider, mock.AsyncMock(), translator=translator)
     translated = route.prepare_message("message")
 
     assert translated["content"] == "foobar"
@@ -59,7 +59,7 @@ def test_prepare_message_translator(dummy_provider):
 def test_prepare_message_translator_error(dummy_provider):
     translator = StringMessageTranslator()
     translator.translate = mock.Mock(return_value={"content": "", "metadata": {}})
-    route = Route(dummy_provider, mock.Mock(), translator=translator)
+    route = Route(dummy_provider, mock.AsyncMock(), translator=translator)
 
     with pytest.raises(ValueError, match="failed to translate"):
         route.prepare_message("message")
@@ -70,7 +70,7 @@ def test_prepare_message_translator_error(dummy_provider):
 
 @pytest.mark.asyncio
 async def test_error_handler_unset(dummy_provider):
-    route = Route(dummy_provider, mock.Mock())
+    route = Route(dummy_provider, mock.AsyncMock())
     exc = TypeError()
     exc_info = (type(exc), exc, None)
     result = await route.error_handler(exc_info, "whatever")
@@ -86,14 +86,14 @@ def test_error_handler_invalid(dummy_provider):
 async def test_error_handler(dummy_provider):
     attrs = {}
 
-    def error_handler(exc_info, message):
+    async def error_handler(exc_info, message):
         attrs["exc_info"] = exc_info
         attrs["message"] = message
         return True
 
     # we cant mock regular functions in error handlers, because it will
     # be checked with asyncio.iscoroutinefunction() and pass as coro
-    route = Route(dummy_provider, mock.Mock(), error_handler=error_handler)
+    route = Route(dummy_provider, mock.AsyncMock(), error_handler=error_handler)
     exc = TypeError()
     exc_info = (type(exc), exc, "traceback")
     result = await route.error_handler(exc_info, "whatever")
@@ -105,7 +105,7 @@ async def test_error_handler(dummy_provider):
 @pytest.mark.asyncio
 async def test_error_handler_coroutine(dummy_provider):
     error_handler = mock.AsyncMock(return_value=True)
-    route = Route(dummy_provider, mock.Mock(), error_handler=error_handler)
+    route = Route(dummy_provider, mock.AsyncMock(), error_handler=error_handler)
     exc = TypeError()
     exc_info = (type(exc), exc, "traceback")
     result = await route.error_handler(exc_info, "whatever")
@@ -140,13 +140,13 @@ async def test_handler_class_based_invalid(dummy_provider):
         pass
 
     handler = Handler()
-    with pytest.raises(TypeError, match="handler must be a callable object"):
+    with pytest.raises(TypeError, match="handler must be a coroutine function"):
         Route(dummy_provider, handler=handler)
 
 
 @pytest.mark.asyncio
 async def test_handler_invalid(dummy_provider):
-    with pytest.raises(TypeError, match="handler must be a callable object"):
+    with pytest.raises(TypeError, match="handler must be a coroutine function"):
         Route(dummy_provider, "invalid-handler")
 
 
@@ -154,7 +154,7 @@ async def test_handler_invalid(dummy_provider):
 async def test_route_lifecycle(dummy_provider):
     dummy_provider.__aenter__ = mock.AsyncMock()
     dummy_provider.__aexit__ = mock.AsyncMock()
-    async with Route(dummy_provider, handler=mock.Mock()):
+    async with Route(dummy_provider, handler=mock.AsyncMock()):
         pass
 
     assert dummy_provider.__aenter__.awaited
@@ -164,7 +164,7 @@ async def test_route_lifecycle(dummy_provider):
 @pytest.mark.asyncio
 async def test_route_lifecycle_with_handler_stop(dummy_provider):
     class Handler(AbstractHandler):
-        def __call__(self, *args, **kwargs) -> bool:  # noqa: ARG002
+        async def __call__(self, *args, **kwargs) -> bool:  # noqa: ARG002
             return True
 
         def stop(self):
@@ -190,7 +190,7 @@ async def test_route_lifecycle_with_handler_stop(dummy_provider):
 async def test_deliver(dummy_provider):
     attrs = {}
 
-    def test_handler(*args, **kwargs):
+    async def test_handler(*args, **kwargs):
         attrs["args"] = args
         attrs["kwargs"] = kwargs
         return True
@@ -225,53 +225,3 @@ async def test_deliver_with_message_translator(dummy_provider):
     assert route.prepare_message.called
     assert mock_handler.called
     mock_handler.assert_called_once_with("whatever", {})
-
-
-@pytest.mark.asyncio
-@mock.patch("pyinsole.routes.asyncio.to_thread", new_callable=mock.AsyncMock)
-async def test_to_coroutine_when_wrap_function_with_to_thread_is_expected(to_thread: mock.AsyncMock):
-    def fn():
-        return None
-
-    to_thread.return_value = "blah"
-
-    assert await to_coroutine(fn, "xablau", "xoblin") == "blah"
-    to_thread.assert_awaited_once_with(fn, "xablau", "xoblin")
-
-
-@pytest.mark.asyncio
-@mock.patch("pyinsole.routes.asyncio.to_thread", new_callable=mock.AsyncMock)
-async def test_to_coroutine_when_wrap_class_with_to_thread_is_expected(to_thread: mock.AsyncMock):
-    class Foo:
-        def __call__(self, message: dict, metadata: dict, **kwargs) -> bool:  # noqa: ARG002
-            return True
-
-    foo = Foo()
-
-    to_thread.return_value = "blah"
-
-    assert await to_coroutine(foo, "xablau", "xoblin") == "blah"
-    to_thread.assert_awaited_once_with(foo, "xablau", "xoblin")
-
-
-@pytest.mark.asyncio
-@mock.patch("pyinsole.routes.asyncio.to_thread", new_callable=mock.AsyncMock)
-async def test_to_coroutine_when_execute_coroutine_directly_is_expected(to_thread: mock.AsyncMock):
-    async def fn(*args, **kwargs):  # noqa: ARG001
-        return True
-
-    assert await to_coroutine(fn, "xablau", "xoblin") is True
-    to_thread.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-@mock.patch("pyinsole.routes.asyncio.to_thread", new_callable=mock.AsyncMock)
-async def test_to_coroutine_when_execute_class_directly_is_expected(to_thread: mock.AsyncMock):
-    class Foo:
-        async def __call__(self, *args, **kwargs) -> bool:  # noqa: ARG002
-            return True
-
-    foo = Foo()
-
-    assert await to_coroutine(foo, "xablau", "xoblin") is True
-    to_thread.assert_not_awaited()
