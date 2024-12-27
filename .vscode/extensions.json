@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "charliermarsh.ruff",
+        "editorconfig.editorconfig",
+        "github.vscode-github-actions",
+        "ms-python.python",
+        "panekj.even-betterer-toml",
+        "redhat.vscode-yaml"
+    ]
+}
