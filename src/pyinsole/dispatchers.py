@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from contextlib import AsyncExitStack
 from typing import Any
 
+from ._compat import override
 from .routes import Route
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class AbstractDispatcher:
     @abc.abstractmethod
-    def dispatch(self, *, cancellation_token: asyncio.Event | None = None, forever: bool = True):
+    async def dispatch(self, *, cancellation_token: asyncio.Event | None = None, forever: bool = True):
         """Method that connects providers to consumers and dispatches and manages messages in transit.
         Calling Message acknowledgment and unacknowledged methods.
 
@@ -116,6 +117,7 @@ class Dispatcher(AbstractDispatcher):
             await self._process_message(message, route)
             processing_queue.task_done()
 
+    @override
     async def dispatch(self, *, cancellation_token: asyncio.Event | None = None, forever: bool = True):
         processing_queue: asyncio.Queue[tuple[Any, Route]] = asyncio.Queue(self.queue_size)
         async with AsyncExitStack() as exit_stack:

@@ -30,6 +30,7 @@ classifiers = [
 dependencies = [
     "aiobotocore>=2.15",
     "botocore",
+    "typing-extensions; python_version < '3.12'"
 ]
 
 [project.optional-dependencies]
