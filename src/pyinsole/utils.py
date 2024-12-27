@@ -1,12 +1,7 @@
-from collections.abc import Awaitable, Callable
-from typing import Any, ParamSpec, TypeVar
+from typing import Any
 
 from ._compat import TypeIs, iscoroutinefunction
-
-ReturnT = TypeVar("ReturnT")
-P = ParamSpec("P")
-
-AsyncCallable = Callable[P, Awaitable[ReturnT]]
+from .types import AsyncCallable
 
 
 def is_async_callable(val: Any) -> TypeIs[AsyncCallable]:
