@@ -75,12 +75,12 @@ class Dispatcher(AbstractDispatcher):
         cancellation_token: asyncio.Event | None = None,
         forever: bool = True,
     ):
-        while True:
+        while not self._check_cancellation(cancellation_token):
             messages = await route.provider.fetch_messages()
             for message in messages:
                 await processing_queue.put((message, route))
 
-            if (not forever) or (self._check_cancellation(cancellation_token)):
+            if not forever:
                 break
 
     async def _consume_messages(self, processing_queue: asyncio.Queue) -> None:
@@ -93,6 +93,7 @@ class Dispatcher(AbstractDispatcher):
     @override
     async def dispatch(self, *, cancellation_token: asyncio.Event | None = None, forever: bool = True):
         processing_queue: asyncio.Queue[tuple[Any, Route]] = asyncio.Queue(self.queue_size)
+
         async with AsyncExitStack() as exit_stack:
             for route in self.routes:
                 await exit_stack.enter_async_context(route)
