@@ -83,11 +83,11 @@ class Dispatcher(AbstractDispatcher):
             if not forever:
                 break
 
-    async def _consume_messages(self, processing_queue: asyncio.Queue) -> None:
+    async def _consume_messages(self, processing_queue: asyncio.Queue, tg: asyncio.TaskGroup) -> None:
         while True:
             message, route = await processing_queue.get()
-
-            await self._process_message(message, route)
+            task = tg.create_task(self._process_message(message, route))
+            await task
             processing_queue.task_done()
 
     @override
@@ -110,7 +110,9 @@ class Dispatcher(AbstractDispatcher):
                     )
                     for route in self.routes
                 ]
-                consumer_tasks = [tg.create_task(self._consume_messages(processing_queue)) for _ in range(self.workers)]
+                consumer_tasks = [
+                    tg.create_task(self._consume_messages(processing_queue, tg)) for _ in range(self.workers)
+                ]
 
                 async def join():
                     await asyncio.wait(provider_tasks)
