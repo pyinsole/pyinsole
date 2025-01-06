@@ -101,7 +101,7 @@ dependencies = [
 
 [tool.hatch.envs.hatch-static-analysis]
 config-path = "ruff_defaults.toml"
-dependencies = ["ruff==0.7.4"]
+dependencies = ["ruff==0.8.6"]
 
 [tool.hatch.envs.style.scripts]
 deps = "deptry ."
